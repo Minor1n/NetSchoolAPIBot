@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "cron": "^2.1.0",
     "netschoolapi": "^1.7.3",
     "telegraf": "^4.10.0"
   }
