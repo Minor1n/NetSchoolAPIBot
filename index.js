@@ -1,8 +1,7 @@
 const { Telegraf } = require('telegraf');
-const cron = require('cron');
+const cron = require('node-cron');
 const fs = require("fs");
 const NS = require("netschoolapi").default;
-const Context = require("netschoolapi");
 const bot = new Telegraf('5776158150:AAFqQaGbhLY1_0JZMg0nGny7NbTrHdl7EGk');
 bot.launch().then(()=>{
     console.log('Ready!')
@@ -63,12 +62,15 @@ function addUserPassword(msg, id) {
         password:msg,
     }
 }*/
-let arr0= users_ns.user.id1693247078.arrMarks;
+let arr0 = users_ns.user.id1693247078.arrMarks;
 let arr = [];
 
-setInterval(async function(){
+cron.schedule('0 0-23 * * *',
+    async function(){
+        let date = new Date()
+        date.setMonth(date.getMonth() - 1)
         const diary = await user.diary({
-            start: new Date(`2022-09-1`),
+            start: date,
             end: new Date(),
         });
         markPackage(diary)
@@ -76,7 +78,8 @@ setInterval(async function(){
         if(intersect[0]){
             sendMark(intersect)
         }
-    },1000*10)
+    }
+);
 
 function sendMark(msg){
     let marks = []
@@ -90,8 +93,9 @@ function intersection(){
     const set = new Set();
     for (const { id } of arr0) set.add(id);
     const intersection = arr.filter(({ id }) => !set.has(id));
+    arr0.length = 0
     for(let i in intersection){
-        arr0.push(intersection[i]);
+        arr0.push(arr[i])
     }
     arr.length = 0;
     return intersection;
