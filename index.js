@@ -1,27 +1,47 @@
-const { Telegraf } = require('telegraf');
+const { Telegraf, Markup, Extra} = require('telegraf');
 const cron = require('node-cron');
 const fs = require("fs");
 const NS = require("netschoolapi").Safe;
-const bot = new Telegraf('5776158150:AAFqQaGbhLY1_0JZMg0nGny7NbTrHdl7EGk');
-bot.launch().then(()=>{console.log('Ready!')})
+const Discord = require('discord.js');
+const {GatewayIntentBits, Partials, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+bot = new Discord.Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
+    partials: [
+        Partials.Channel
+    ]
+});
+const botTg = new Telegraf('5776158150:AAFqQaGbhLY1_0JZMg0nGny7NbTrHdl7EGk');
+bot.login('MTAyOTY4NzU5Nzk4NDkwNzMyNA.GWwzcJ.slo7cN7cJyj0Gy8a7cqPVv9gR-4T4JydgGRNYE').then(()=>{console.log('DS Ready!')})
+botTg.launch().then(()=>{console.log('TG Ready!')})
 const users_ns = require('./memory/users.json');
 setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*5);
 
-bot.command('start', (ctx) => {
+botTg.command('start', (ctx) => {
     if(!users_ns.user[ctx.from.id]){
-        users_ns.user[ctx.from.id] = setUser(ctx.from.id)
+        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null)
+        ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
     }
 })
-
-function setUser(user) {
-    return{
-        id: user,
-        login: null,
-        password: null,
-        school: null,
-        arrMarks: [],
-    }
-}
+bot.on('messageCreate', msg => {
+    if(msg.content === 'log'){sendLog(msg);}
+})
+bot.on('interactionCreate', async interaction=> {
+    if(interaction.isButton()){if(interaction.customId === 'registration'){openLoginMenu(interaction)}}
+    if(interaction.isModalSubmit()){if(interaction.customId === 'registrationModal'){
+        interaction.reply({content:'💜',ephemeral:true})
+        let i = await check(interaction)
+        bot.guilds.cache.get('1029686781626548236').members.fetch(`${interaction.user.id}`)
+            .then((user)=>{
+                user.send({content: i,})
+            })
+    }}
+})
 
 /*setInterval(
 async function(){
@@ -85,7 +105,7 @@ function sendMark(msg, id){
     for (let i in msg) {
         marks.push(`\n${msg[i].date} ${msg[i].lesson} ${msg[i].mark}`)
     }
-    bot.telegram.sendMessage(id, `Вам выставили оценку: ${marks}`)
+    botTg.telegram.sendMessage(id, `Вам выставили оценку: ${marks}`)
 }
 
 function intersection(arr0, arr) {
@@ -126,5 +146,136 @@ function markPackage(diary,  arr0, arr) {
                 }
             }
         }
+    }
+}
+
+function sendLog(msg){
+    const registration = new ButtonBuilder()
+        .setCustomId("registration")
+        .setEmoji('📝')
+        .setStyle(ButtonStyle.Primary)
+
+    const registrationEmbed = {
+        color: 3092790,
+        fields: [
+            {
+                name: "🔖 Регистрация в NetSchool",
+                value: `Заполните данные 📝`,
+                inline: false
+            }
+        ],
+    }
+
+    msg.channel.send({ embeds: [registrationEmbed], components: [
+            new ActionRowBuilder().addComponents(
+                registration
+            ),
+        ],
+    })
+}
+
+function openLoginMenu(interaction) {
+    const modal = new ModalBuilder()
+        .setCustomId('registrationModal')
+        .setTitle('Вход в систему');
+    const login = new TextInputBuilder()
+        .setCustomId('loginModal')
+        .setLabel("Ваш логин от NetSchool")
+        .setStyle(TextInputStyle.Short);
+
+    const password = new TextInputBuilder()
+        .setCustomId('passwordModal')
+        .setLabel("Ваш пароль от NetSchool")
+        .setStyle(TextInputStyle.Short);
+
+    const tgId = new TextInputBuilder()
+        .setCustomId('tgIdModal')
+        .setLabel("Ваш id в Тг (получить у Ania_lob_bot в Тг)")
+        .setStyle(TextInputStyle.Short);
+
+    const firstActionRow = new ActionRowBuilder().addComponents(login);
+    const secondActionRow = new ActionRowBuilder().addComponents(password);
+    const thirdActionRow = new ActionRowBuilder().addComponents(tgId);
+
+    modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+
+    interaction.showModal(modal);
+}
+
+async function check(interaction){
+    let result = []
+    let info = []
+    const login = interaction.fields.getTextInputValue('loginModal');
+    const password = interaction.fields.getTextInputValue('passwordModal');
+    const id = interaction.fields.getTextInputValue('tgIdModal');
+    try {
+        const user = new NS({
+            origin: "https://region.obramur.ru/",
+            login: login,
+            password: password,
+            school: 'МАОУ \"Алексеевская гимназия г.Благовещенска\"',
+        });
+        await user.logIn()
+        let i = await user.info()
+        info.push(i)
+        await user.logOut()
+    }catch (err) {
+        result.push('Неверно указаны данные!\nЛибо вы не учитесь в \"МАОУ \"Алексеевская гимназия г.Благовещенска\"\"');
+        return result[0];
+    }
+    result.push('Вы успешно вошли!')
+    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"")
+    log(interaction, id, login, password, info)
+    return result[0]
+}
+
+function log(interaction, id, login, password, info) {
+    bot.guilds.cache.get('1029686781626548236').channels.fetch('1029690784867426355').then((channel) =>{
+        const embed = {
+            color: 3092790,
+            title: '🔖 Регистрация в NetSchool',
+            author: {
+                name: interaction.user.username,
+                icon_url: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.jpeg`
+            },
+            fields: [
+                {
+                    name: "Логин",
+                    value: `${login}`,
+                    inline: false
+                },
+                {
+                    name: "Пароль",
+                    value: `${password}`,
+                    inline: false
+                },
+                {
+                    name: "Телеграм/Дискорд",
+                    value: `${id}/${interaction.user.id}`,
+                    inline: false
+                },
+                {
+                    name: "ФИО",
+                    value: `${info[0].lastName} ${info[0].firstName} ${info[0].middleName}`,
+                    inline: false
+                },
+                {
+                    name: "ДР",
+                    value: `${info[0]._birthDate.slice(0,10)}`,
+                    inline: false
+                }
+            ],
+        }
+        channel.send({embeds: [embed]})
+    })
+}
+
+function setUser(user, login, password, school) {
+    return{
+        id: user,
+        login: login,
+        password: password,
+        school: school,
+        arrMarks: [],
     }
 }
