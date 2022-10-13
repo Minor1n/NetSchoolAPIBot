@@ -24,12 +24,17 @@ setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns,
 
 botTg.command('start', (ctx) => {
     if(!users_ns.user[ctx.from.id]){
-        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null,ctx.from.username)
+        let assets = {
+            marks: false,
+            homeWork: false,
+        }
+
+        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets)
         ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
     }
 })
 bot.on('messageCreate', msg => {
-    if(msg.content === 'log'){sendLog(msg);}
+    //if(msg.content === 'log'){sendLog(msg);}
 })
 bot.on('interactionCreate', async interaction=> {
     if(interaction.isButton()){if(interaction.customId === 'registration'){openLoginMenu(interaction)}}
@@ -56,14 +61,15 @@ bot.on('interactionCreate', async interaction=> {
 cron.schedule('0 0-23 * * *', async function(){
     for (let i in users_ns.user){
         try{
-            if(users_ns.user[i].login === null || users_ns.user[i].password === null || users_ns.user[i].school === null)return;
+            let us = users_ns.user[i]
+            if(us.assets.marks === false || us.login === null || us.password === null || us.school === null)return;
             const user = new NS({
                 origin: "https://region.obramur.ru/",
-                login: users_ns.user[i].login,
-                password: users_ns.user[i].password,
-                school: users_ns.user[i].school,
+                login: us.login,
+                password: us.password,
+                school: us.school,
             });
-            let arr0 = users_ns.user[i].arrMarks;
+            let arr0 = us.arrMarks;
             let arr = [];
             let date = new Date()
             date.setMonth(date.getMonth() - 1)
@@ -75,7 +81,7 @@ cron.schedule('0 0-23 * * *', async function(){
             await markPackage(diary, arr0, arr)
             let intersect = await intersection(arr0, arr);
             if(intersect[0]){
-                sendMark(intersect, users_ns.user[i].id)
+                sendMark(intersect, us.id)
             }
             await user.logOut()
         }
@@ -89,7 +95,7 @@ cron.schedule('0 0-23 * * *', async function(){
 function sendMark(msg, id){
     let marks = []
     for (let i in msg) {
-        marks.push(`\n${msg[i].date} ${msg[i].lesson} ${msg[i].mark}`)
+        marks.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} ${msg[i].lesson} ${msg[i].mark}`)
     }
     botTg.telegram.sendMessage(id, `Вам выставили оценку: ${marks}`)
 }
@@ -219,12 +225,13 @@ async function check(interaction){
         info.push(i)
         await user.logOut()
     }catch (err) {
-        result.push('Неверно указаны данные!\nЛибо вы не учитесь в \"МАОУ \"Алексеевская гимназия г.Благовещенска\"\"');
+        result.push('Неверно указаны данные!\nЛибо вы не учитесь в МАОУ \"Алексеевская гимназия г.Благовещенска\"');
         return result[0];
     }
     result.push('Вы успешно вошли!')
-    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name)
+    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name, users_ns.user[id].assets)
     log(interaction, id, login, password, info, users_ns.user[id].name)
+    welcome(id, login, password, info)
     return result[0];
 }
 
@@ -269,13 +276,199 @@ function log(interaction, id, login, password, info, name) {
     })
 }
 
-function setUser(user, login, password, school, name) {
+function welcome(id, login, password, info){
+    botTg.telegram.sendMessage(
+        id,
+        `Приветствую, ${info[0].firstName} ${info[0].middleName}\nВыберите виды уведомлений`,
+        Extra.markup(
+            Markup.inlineKeyboard([
+                [Markup.callbackButton('Появление оценок ✖️','marksOff'),Markup.callbackButton('Появление дз ✖️','homeWorkOff')]
+            ])
+        )
+    )
+}
+
+function setUser(user, login, password, school, name, assets) {
     return{
         id: Number(user),
         name: name,
         login: login,
         password: password,
         school: school,
+        assets: assets,
         arrMarks: [null],
+        arrHomeWork:[null],
+    }
+}
+
+botTg.action('marksOff', ctx=>{
+    let k = []
+    let assets =[]
+    let i = users_ns.user[ctx.chat.id]
+    if(i.assets.homeWork === true){
+        k.push('Появление дз ✔️️','homeWorkOn')
+        assets.push({
+            marks: true,
+            homeWork: true,
+        })
+    }else{
+        k.push('Появление дз ✖️️️','homeWorkOff')
+        assets.push({
+            marks: true,
+            homeWork: false,
+        })
+    }
+
+    ctx.editMessageText(`${ctx.update.callback_query.message.text}`,Extra.markup(
+        Markup.inlineKeyboard([
+            [Markup.callbackButton('Появление оценок ✔️','marksOn'),Markup.callbackButton(k[0],k[1])]
+        ])
+    ))
+    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+});
+botTg.action('marksOn', ctx=>{
+    let k = []
+    let assets =[]
+    let i = users_ns.user[ctx.chat.id]
+    if(i.assets.homeWork === true){
+        k.push('Появление дз ✔️️','homeWorkOn')
+        assets.push({
+            marks: false,
+            homeWork: true,
+        })
+    }else{
+        k.push('Появление дз ✖️️️','homeWorkOff')
+        assets.push({
+            marks: false,
+            homeWork: false,
+        })
+    }
+    ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
+        Markup.inlineKeyboard([
+            [Markup.callbackButton('Появление оценок ✖️','marksOff'),Markup.callbackButton(k[0],k[1])]
+        ])
+    ))
+    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+});
+
+botTg.action('homeWorkOff', ctx=>{
+    let k = []
+    let assets =[]
+    let i = users_ns.user[ctx.chat.id]
+    if(i.assets.marks === true){
+        k.push('Появление оценок ✔️','marksOn')
+        assets.push({
+            marks: true,
+            homeWork: true,
+        })
+    }else{
+        k.push('Появление оценок ✖️','marksOff')
+        assets.push({
+            marks: false,
+            homeWork: true,
+        })
+    }
+
+    ctx.editMessageText(`${ctx.update.callback_query.message.text}`,Extra.markup(
+        Markup.inlineKeyboard([
+            [Markup.callbackButton(k[0],k[1]),Markup.callbackButton('Появление дз ✔️️','homeWorkOn')]
+        ])
+    ))
+    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+});
+botTg.action('homeWorkOn', ctx=>{
+    let k = []
+    let assets =[]
+    let i = users_ns.user[ctx.chat.id]
+    if(i.assets.marks === true){
+        k.push('Появление оценок ✔️','marksOn')
+        assets.push({
+            marks: true,
+            homeWork: false,
+        })
+    }else{
+        k.push('Появление оценок ✖️','marksOff')
+        assets.push({
+            marks: false,
+            homeWork: false,
+        })
+    }
+    ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
+        Markup.inlineKeyboard([
+            [Markup.callbackButton(k[0],k[1]),Markup.callbackButton('Появление дз ✖️️️','homeWorkOff')]
+        ])
+    ))
+    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+});
+
+
+cron.schedule('10 0-23 * * *', async function(){
+    for (let i in users_ns.user){
+        try{
+            let us = users_ns.user[i]
+            if(us.assets.homeWork === false || us.login === null || us.password === null || us.school === null)return;
+            const user = new NS({
+                origin: "https://region.obramur.ru/",
+                login: us.login,
+                password: us.password,
+                school: us.school,
+            });
+            let arr0 = us.arrHomeWork;
+            let arr = [];
+            let date = new Date()
+            date.setMonth(date.getMonth() + 1)
+            await user.logIn()
+            const diary = await user.diary({
+                start: new Date(),
+                end: date,
+            });
+            await homeWorkPackage(diary, arr0, arr)
+            let intersect = await intersection(arr0, arr);
+            if(intersect[0]){
+                sendHomeWork(intersect, us.id)
+            }
+            await user.logOut()
+        }
+        catch(err) {
+            await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
+            users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name)
+        }
+    }
+})
+
+function sendHomeWork(msg, id){
+    let hw = []
+    for (let i in msg) {
+        hw.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} ${msg[i].lesson} ${msg[i].homeWork}`)
+    }
+    botTg.telegram.sendMessage(id, `Известно дз: ${hw}`)
+}
+
+function homeWorkPackage(diary,  arr0, arr) {
+    for(let key in diary.days) {
+        for (let key2 in diary.days[key].lessons) {
+            for (let key3 in diary.days[key].lessons[key2].assignments){
+                if (diary.days[key].lessons[key2].assignments[key3]){
+                    let d = diary.days[key].lessons[key2].assignments[key3];
+                    if (d.text !== undefined){
+                        if(diary.days[key].lessons[key2].subject ==='Основы безопасности жизнедеятельности'){
+                            arr.push({
+                                id: d.id,
+                                date: diary.days[key]._date.slice(0,10),
+                                lesson: 'ОБЖ',
+                                homeWork: d.text,
+                            });
+                        }else{
+                            arr.push({
+                                id: d.id,
+                                date: diary.days[key]._date.slice(0,10),
+                                lesson: diary.days[key].lessons[key2].subject,
+                                homeWork: d.text,
+                            });
+                        }
+                    }
+                }
+            }
+        }
     }
 }
