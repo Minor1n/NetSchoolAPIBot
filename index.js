@@ -36,9 +36,19 @@ bot.on('interactionCreate', async interaction=> {
     if(interaction.isModalSubmit()){if(interaction.customId === 'registrationModal'){
         interaction.reply({content:'💜',ephemeral:true})
         let i = await check(interaction)
+        let embed = {
+            color:3092790,
+            fields:[
+                {
+                    name: 'Notice',
+                    value: `${i}`,
+                    inline: false,
+                }
+            ]
+        }
         bot.guilds.cache.get('1029686781626548236').members.fetch(`${interaction.user.id}`)
             .then((user)=>{
-                user.send({content: i,})
+                user.send({embeds:[embed]})
             })
     }}
 })
@@ -112,6 +122,14 @@ function intersection(arr0, arr) {
     const set = new Set();
     for (const { id } of arr0) set.add(id);
     const intersection = arr.filter(({ id }) => !set.has(id));
+    if( arr0[0] === null){
+        arr0.length = 0
+        for(let i in arr){
+            arr0.push({id: arr[i].id})
+        }
+        arr.length = 0;
+        return intersection.length = 0;
+    }
     arr0.length = 0
     for(let i in arr){
         arr0.push({id: arr[i].id})
@@ -208,6 +226,10 @@ async function check(interaction){
     const login = interaction.fields.getTextInputValue('loginModal');
     const password = interaction.fields.getTextInputValue('passwordModal');
     const id = interaction.fields.getTextInputValue('tgIdModal');
+    if(!users_ns.user[id]){
+        result.push('Сначала получите id у [Ania](https://t.me/ania_lob_bot) в телеграм')
+        return result[0]
+    }
     try {
         const user = new NS({
             origin: "https://region.obramur.ru/",
@@ -226,7 +248,7 @@ async function check(interaction){
     result.push('Вы успешно вошли!')
     users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"")
     log(interaction, id, login, password, info)
-    return result[0]
+    return result[0];
 }
 
 function log(interaction, id, login, password, info) {
@@ -272,10 +294,10 @@ function log(interaction, id, login, password, info) {
 
 function setUser(user, login, password, school) {
     return{
-        id: user,
+        id: Number(user),
         login: login,
         password: password,
         school: school,
-        arrMarks: [],
+        arrMarks: [null],
     }
 }
