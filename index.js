@@ -120,16 +120,17 @@ function sendMark(msg, id){
 
 function intersection(arr0, arr) {
     const set = new Set();
-    for (const { id } of arr0) set.add(id);
-    const intersection = arr.filter(({ id }) => !set.has(id));
     if( arr0[0] === null){
+        let intersection2 = []
         arr0.length = 0
         for(let i in arr){
             arr0.push({id: arr[i].id})
         }
         arr.length = 0;
-        return intersection.length = 0;
+        return intersection2
     }
+    for (const { id } of arr0) set.add(id);
+    const intersection = arr.filter(({ id }) => !set.has(id));
     arr0.length = 0
     for(let i in arr){
         arr0.push({id: arr[i].id})
