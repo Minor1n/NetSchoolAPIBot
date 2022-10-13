@@ -24,7 +24,7 @@ setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns,
 
 botTg.command('start', (ctx) => {
     if(!users_ns.user[ctx.from.id]){
-        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null)
+        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null,ctx.from.username)
         ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
     }
 })
@@ -53,37 +53,9 @@ bot.on('interactionCreate', async interaction=> {
     }}
 })
 
-/*setInterval(
-async function(){
-    for (let i in users_ns.user){
-        const user = new NS({
-            origin: "https://region.obramur.ru/",
-            login: users_ns.user[i].login,
-            password: users_ns.user[i].password,
-            school: users_ns.user[i].school,
-        });
-        let arr0 = users_ns.user[i].arrMarks;
-        let arr = [];
-        let date = new Date()
-        date.setMonth(date.getMonth() - 1)
-        await user.logIn()
-        const diary = await user.diary({
-            start: date,
-            end: new Date(),
-        });
-        markPackage(diary, arr0, arr)
-        let intersect = intersection(arr0, arr);
-        if(intersect[0]){
-            sendMark(intersect, users_ns.user[i].id)
-        }
-        await user.logOut()
-    }
-}, 1000*10
-);*/
-
 cron.schedule('0 0-23 * * *', async function(){
-    try{
-        for (let i in users_ns.user){
+    for (let i in users_ns.user){
+        try{
             if(users_ns.user[i].login === null || users_ns.user[i].password === null || users_ns.user[i].school === null)return;
             const user = new NS({
                 origin: "https://region.obramur.ru/",
@@ -103,12 +75,16 @@ cron.schedule('0 0-23 * * *', async function(){
             await markPackage(diary, arr0, arr)
             let intersect = await intersection(arr0, arr);
             if(intersect[0]){
-                sendMark(intersect, users_ns.user[i])
+                sendMark(intersect, users_ns.user[i].id)
             }
             await user.logOut()
         }
-    }catch(e){console.log(e);}
-});
+        catch(err) {
+            await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
+            users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name)
+        }
+    }
+})
 
 function sendMark(msg, id){
     let marks = []
@@ -247,12 +223,12 @@ async function check(interaction){
         return result[0];
     }
     result.push('Вы успешно вошли!')
-    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"")
-    log(interaction, id, login, password, info)
+    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name)
+    log(interaction, id, login, password, info, users_ns.user[id].name)
     return result[0];
 }
 
-function log(interaction, id, login, password, info) {
+function log(interaction, id, login, password, info, name) {
     bot.guilds.cache.get('1029686781626548236').channels.fetch('1029690784867426355').then((channel) =>{
         const embed = {
             color: 3092790,
@@ -263,23 +239,23 @@ function log(interaction, id, login, password, info) {
             },
             fields: [
                 {
-                    name: "Логин",
-                    value: `${login}`,
-                    inline: false
-                },
-                {
-                    name: "Пароль",
-                    value: `${password}`,
+                    name: "ФИО",
+                    value: `${info[0].lastName} ${info[0].firstName} ${info[0].middleName}`,
                     inline: false
                 },
                 {
                     name: "Телеграм/Дискорд",
-                    value: `${id}/${interaction.user.id}`,
+                    value: `[${name}](https://t.me/${name}) / <@${interaction.user.id}>`,
                     inline: false
                 },
                 {
-                    name: "ФИО",
-                    value: `${info[0].lastName} ${info[0].firstName} ${info[0].middleName}`,
+                    name: "Логин",
+                    value: `||${login}||`,
+                    inline: false
+                },
+                {
+                    name: "Пароль",
+                    value: `||${password}||`,
                     inline: false
                 },
                 {
@@ -293,9 +269,10 @@ function log(interaction, id, login, password, info) {
     })
 }
 
-function setUser(user, login, password, school) {
+function setUser(user, login, password, school, name) {
     return{
         id: Number(user),
+        name: name,
         login: login,
         password: password,
         school: school,
