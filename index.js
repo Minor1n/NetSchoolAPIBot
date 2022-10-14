@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const fs = require("fs");
 const NS = require("netschoolapi").Safe;
 const Discord = require('discord.js');
-const {GatewayIntentBits, Partials, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const {GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 bot = new Discord.Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -150,7 +150,6 @@ function packageAlert(diary,  arr0, arr, type) {
                     let d = diary.days[key].lessons[key2].assignments[key3];
                     let subject = diary.days[key].lessons[key2].subject
                     if(type === 'homeWork'){
-                        console.log(subject)
                         if(subject !== 'Основы безопасности жизнедеятельности' && subject !== 'Физкультура' && subject !== 'функциональная гр.' && subject !== 'Родной язык' && subject !== 'Родная литература'){
                             if (d.text !== undefined && d.text !== '---Не указана---' && d.text !== '-'){
                                 {
