@@ -40,48 +40,61 @@ bot.on('interactionCreate', async interaction=> {
     if(interaction.isButton()){if(interaction.customId === 'registration'){openLoginMenu(interaction)}}
     if(interaction.isModalSubmit()){if(interaction.customId === 'registrationModal'){
         interaction.reply({content:'💜',ephemeral:true})
-        let i = await check(interaction)
+        let value = await check(interaction)
         let embed = {
             color:3092790,
             fields:[
                 {
                     name: 'Notice',
-                    value: `${i}`,
+                    value: `${value}`,
                     inline: false,
                 }
             ]
         }
-        bot.guilds.cache.get('1029686781626548236').members.fetch(`${interaction.user.id}`)
-            .then((user)=>{
-                user.send({embeds:[embed]})
-            })
+        bot.guilds.cache.get('1029686781626548236').members.fetch(`${interaction.user.id}`).then((user)=>{user.send({embeds:[embed]})})
     }}
 })
 
 cron.schedule('0 0-23 * * *', async function(){
     for (let i in users_ns.user){
-        try{
-            let us = users_ns.user[i]
-            if(us.assets.marks === false || us.login === null || us.password === null || us.school === null)return;
-            const user = new NS({
-                origin: "https://region.obramur.ru/",
-                login: us.login,
-                password: us.password,
-                school: us.school,
-            });
-            let arr0 = us.arrMarks;
-            let arr = [];
-            let date = new Date()
-            date.setMonth(date.getMonth() - 1)
+        let us = users_ns.user[i]
+        let date = new Date()
+        if(us.login === null || us.password === null || us.school === null) return;
+        const user = new NS({
+            origin: "https://region.obramur.ru/",
+            login: us.login,
+            password: us.password,
+            school: us.school,
+        });
+        try {
             await user.logIn()
-            const diary = await user.diary({
-                start: date,
-                end: new Date(),
-            });
-            await markPackage(diary, arr0, arr)
-            let intersect = await intersection(arr0, arr);
-            if(intersect[0]){
-                sendMark(intersect, us.id)
+            if (us.assets.marks === true){
+                let arr0 = us.arrMarks;
+                let arr = [];
+                date.setMonth(date.getMonth() - 1)
+                const diary = await user.diary({
+                    start: date,
+                    end: new Date(),
+                });
+                await packageAlert(diary, arr0, arr, 'mark')
+                let intersect = await intersection(arr0, arr);
+                if (intersect[0]) {
+                    sendAlert(intersect, us.id ,'Вам выставили оценку', intersect[0].mark);
+                }
+            }
+            if(us.assets.homeWork === true){
+                let arr0 = us.arrHomeWork;
+                let arr = [];
+                date.setMonth(date.getMonth() + 1)
+                const diary = await user.diary({
+                    start: new Date(),
+                    end: date,
+                });
+                await packageAlert(diary, arr0, arr, 'homeWork')
+                let intersect = await intersection(arr0, arr);
+                if(intersect[0]){
+                    sendAlert(intersect, us.id,'Известно дз', intersect[0].homeWork)
+                }
             }
             await user.logOut()
         }
@@ -92,12 +105,12 @@ cron.schedule('0 0-23 * * *', async function(){
     }
 })
 
-function sendMark(msg, id){
-    let marks = []
+function sendAlert(msg, id , content , type){
+    let result = []
     for (let i in msg) {
-        marks.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} ${msg[i].lesson} ${msg[i].mark}`)
+        result.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} ${msg[i].lesson} ${type}`)
     }
-    botTg.telegram.sendMessage(id, `Вам выставили оценку: ${marks}`)
+    botTg.telegram.sendMessage(id, `${content}: ${result}`)
 }
 
 function intersection(arr0, arr) {
@@ -121,27 +134,49 @@ function intersection(arr0, arr) {
     return intersection;
 }
 
-function markPackage(diary,  arr0, arr) {
+function packageAlert(diary,  arr0, arr, type) {
     for(let key in diary.days) {
         for (let key2 in diary.days[key].lessons) {
             for (let key3 in diary.days[key].lessons[key2].assignments){
                 if (diary.days[key].lessons[key2].assignments[key3]){
                     let d = diary.days[key].lessons[key2].assignments[key3];
-                    if (d.mark !== null){
-                        if(diary.days[key].lessons[key2].subject ==='Основы безопасности жизнедеятельности'){
-                            arr.push({
-                                id: d.id,
-                                date: diary.days[key]._date.slice(0,10),
-                                lesson: 'ОБЖ',
-                                mark: d.mark,
-                            });
-                        }else{
-                            arr.push({
-                                id: d.id,
-                                date: diary.days[key]._date.slice(0,10),
-                                lesson: diary.days[key].lessons[key2].subject,
-                                mark: d.mark,
-                            });
+                    if(type === 'mark'){
+                        if (d.mark !== null){
+                            if(diary.days[key].lessons[key2].subject ==='Основы безопасности жизнедеятельности'){
+                                arr.push({
+                                    id: d.id,
+                                    date: diary.days[key]._date.slice(0,10),
+                                    lesson: 'ОБЖ',
+                                    mark: type,
+                                });
+                            }else{
+                                arr.push({
+                                    id: d.id,
+                                    date: diary.days[key]._date.slice(0,10),
+                                    lesson: diary.days[key].lessons[key2].subject,
+                                    mark: type,
+                                });
+                            }
+                        }
+                    }
+                    else if(type === 'homeWork'){
+                        if (d.text !== undefined){
+                            if(diary.days[key].lessons[key2].subject === 'Физкультура')return;
+                            if(diary.days[key].lessons[key2].subject ==='Основы безопасности жизнедеятельности'){
+                                arr.push({
+                                    id: d.id,
+                                    date: diary.days[key]._date.slice(0,10),
+                                    lesson: 'ОБЖ',
+                                    homeWork: d.text,
+                                });
+                            }else{
+                                arr.push({
+                                    id: d.id,
+                                    date: diary.days[key]._date.slice(0,10),
+                                    lesson: diary.days[key].lessons[key2].subject,
+                                    homeWork: d.text,
+                                });
+                            }
                         }
                     }
                 }
@@ -302,173 +337,92 @@ function setUser(user, login, password, school, name, assets) {
 }
 
 botTg.action('marksOff', ctx=>{
-    let k = []
+    let firstBtn = ['Появление оценок ✖️','marksOff']
+    let secondBtn = []
     let assets =[]
-    let i = users_ns.user[ctx.chat.id]
-    if(i.assets.homeWork === true){
-        k.push('Появление дз ✔️️','homeWorkOn')
+    let user = users_ns.user[ctx.chat.id]
+    if(user.assets.homeWork === true){
+        secondBtn.push('Появление дз ✔️️','homeWorkOn')
         assets.push({
             marks: true,
             homeWork: true,
         })
     }else{
-        k.push('Появление дз ✖️️️','homeWorkOff')
+        secondBtn.push('Появление дз ✖️️️','homeWorkOff')
         assets.push({
             marks: true,
             homeWork: false,
         })
     }
-
-    ctx.editMessageText(`${ctx.update.callback_query.message.text}`,Extra.markup(
-        Markup.inlineKeyboard([
-            [Markup.callbackButton('Появление оценок ✔️','marksOn'),Markup.callbackButton(k[0],k[1])]
-        ])
-    ))
-    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
 });
 botTg.action('marksOn', ctx=>{
-    let k = []
+    let firstBtn = ['Появление оценок ✖️','marksOff']
+    let secondBtn = []
     let assets =[]
-    let i = users_ns.user[ctx.chat.id]
-    if(i.assets.homeWork === true){
-        k.push('Появление дз ✔️️','homeWorkOn')
+    let user = users_ns.user[ctx.chat.id]
+    if(user.assets.homeWork === true){
+        secondBtn.push('Появление дз ✔️️','homeWorkOn')
         assets.push({
             marks: false,
             homeWork: true,
         })
     }else{
-        k.push('Появление дз ✖️️️','homeWorkOff')
+        secondBtn.push('Появление дз ✖️️️','homeWorkOff')
         assets.push({
             marks: false,
             homeWork: false,
         })
     }
-    ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
-        Markup.inlineKeyboard([
-            [Markup.callbackButton('Появление оценок ✖️','marksOff'),Markup.callbackButton(k[0],k[1])]
-        ])
-    ))
-    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
 });
 
 botTg.action('homeWorkOff', ctx=>{
-    let k = []
+    let firstBtn = []
+    let secondBtn = ['Появление дз ✔️️','homeWorkOn']
     let assets =[]
-    let i = users_ns.user[ctx.chat.id]
-    if(i.assets.marks === true){
-        k.push('Появление оценок ✔️','marksOn')
+    let user = users_ns.user[ctx.chat.id]
+    if(user.assets.marks === true){
+        firstBtn.push('Появление оценок ✔️','marksOn')
         assets.push({
             marks: true,
             homeWork: true,
         })
     }else{
-        k.push('Появление оценок ✖️','marksOff')
+        firstBtn.push('Появление оценок ✖️','marksOff')
         assets.push({
             marks: false,
             homeWork: true,
         })
     }
-
-    ctx.editMessageText(`${ctx.update.callback_query.message.text}`,Extra.markup(
-        Markup.inlineKeyboard([
-            [Markup.callbackButton(k[0],k[1]),Markup.callbackButton('Появление дз ✔️️','homeWorkOn')]
-        ])
-    ))
-    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
 });
 botTg.action('homeWorkOn', ctx=>{
-    let k = []
+    let firstBtn = []
+    let secondBtn = ['Появление дз ✖️️️','homeWorkOff']
     let assets =[]
-    let i = users_ns.user[ctx.chat.id]
-    if(i.assets.marks === true){
-        k.push('Появление оценок ✔️','marksOn')
+    let user = users_ns.user[ctx.chat.id]
+    if(user.assets.marks === true){
+        firstBtn.push('Появление оценок ✔️','marksOn')
         assets.push({
             marks: true,
             homeWork: false,
         })
     }else{
-        k.push('Появление оценок ✖️','marksOff')
+        firstBtn.push('Появление оценок ✖️','marksOff')
         assets.push({
             marks: false,
             homeWork: false,
         })
     }
-    ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
-        Markup.inlineKeyboard([
-            [Markup.callbackButton(k[0],k[1]),Markup.callbackButton('Появление дз ✖️️️','homeWorkOff')]
-        ])
-    ))
-    users_ns.user[ctx.chat.id] = setUser(i.id,i.login,i.password,i.school,i.name,assets[0])
+    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
 });
 
-
-cron.schedule('10 0-23 * * *', async function(){
-    for (let i in users_ns.user){
-        try{
-            let us = users_ns.user[i]
-            if(us.assets.homeWork === false || us.login === null || us.password === null || us.school === null)return;
-            const user = new NS({
-                origin: "https://region.obramur.ru/",
-                login: us.login,
-                password: us.password,
-                school: us.school,
-            });
-            let arr0 = us.arrHomeWork;
-            let arr = [];
-            let date = new Date()
-            date.setMonth(date.getMonth() + 1)
-            await user.logIn()
-            const diary = await user.diary({
-                start: new Date(),
-                end: date,
-            });
-            await homeWorkPackage(diary, arr0, arr)
-            let intersect = await intersection(arr0, arr);
-            if(intersect[0]){
-                sendHomeWork(intersect, us.id)
-            }
-            await user.logOut()
-        }
-        catch(err) {
-            await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
-            users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name)
-        }
-    }
-})
-
-function sendHomeWork(msg, id){
-    let hw = []
-    for (let i in msg) {
-        hw.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} ${msg[i].lesson} ${msg[i].homeWork}`)
-    }
-    botTg.telegram.sendMessage(id, `Известно дз: ${hw}`)
-}
-
-function homeWorkPackage(diary,  arr0, arr) {
-    for(let key in diary.days) {
-        for (let key2 in diary.days[key].lessons) {
-            for (let key3 in diary.days[key].lessons[key2].assignments){
-                if (diary.days[key].lessons[key2].assignments[key3]){
-                    let d = diary.days[key].lessons[key2].assignments[key3];
-                    if (d.text !== undefined){
-                        if(diary.days[key].lessons[key2].subject ==='Основы безопасности жизнедеятельности'){
-                            arr.push({
-                                id: d.id,
-                                date: diary.days[key]._date.slice(0,10),
-                                lesson: 'ОБЖ',
-                                homeWork: d.text,
-                            });
-                        }else{
-                            arr.push({
-                                id: d.id,
-                                date: diary.days[key]._date.slice(0,10),
-                                lesson: diary.days[key].lessons[key2].subject,
-                                homeWork: d.text,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    }
+function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
+    ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
+        Markup.inlineKeyboard([
+            [Markup.callbackButton(firstButton[0],firstButton[0]),Markup.callbackButton(secondButton[0],secondButton[1])]
+        ])
+    ))
+    users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0])
 }
