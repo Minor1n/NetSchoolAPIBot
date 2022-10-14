@@ -421,7 +421,7 @@ botTg.action('homeWorkOn', ctx=>{
 function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
     ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
         Markup.inlineKeyboard([
-            [Markup.callbackButton(firstButton[0],firstButton[0]),Markup.callbackButton(secondButton[0],secondButton[1])]
+            [Markup.callbackButton(firstButton[0],firstButton[1]),Markup.callbackButton(secondButton[0],secondButton[1])]
         ])
     ))
     users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0])
