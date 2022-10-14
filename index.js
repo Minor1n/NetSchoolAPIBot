@@ -55,7 +55,7 @@ bot.on('interactionCreate', async interaction=> {
     }}
 })
 
-cron.schedule('0-59 0-23 * * *', async function(){
+cron.schedule('0 0-23 * * *', async function(){
     for (let i in users_ns.user){
         let us = users_ns.user[i]
         let date = new Date()
@@ -150,15 +150,17 @@ function packageAlert(diary,  arr0, arr, type) {
                     let d = diary.days[key].lessons[key2].assignments[key3];
                     let subject = diary.days[key].lessons[key2].subject
                     if(type === 'homeWork'){
-                        if(subject === 'Основы безопасности жизнедеятельности' || subject === 'Физкультура' || subject === 'функциональная гр.' || subject === 'Родной язык' || subject === 'Родная литература')return;
-                        if (d.text !== undefined && d.text !== '---Не указана---' && d.text !== '-'){
-                            {
-                                arr.push({
-                                    id: d.id,
-                                    date: diary.days[key]._date.slice(0,10),
-                                    lesson: subject,
-                                    homeWork: d.text,
-                                });
+                        console.log(subject)
+                        if(subject !== 'Основы безопасности жизнедеятельности' && subject !== 'Физкультура' && subject !== 'функциональная гр.' && subject !== 'Родной язык' && subject !== 'Родная литература'){
+                            if (d.text !== undefined && d.text !== '---Не указана---' && d.text !== '-'){
+                                {
+                                    arr.push({
+                                        id: d.id,
+                                        date: diary.days[key]._date.slice(0,10),
+                                        lesson: subject,
+                                        homeWork: d.text,
+                                    });
+                                }
                             }
                         }
                     }
