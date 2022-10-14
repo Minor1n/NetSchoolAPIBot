@@ -20,7 +20,7 @@ const botTg = new Telegraf('5776158150:AAFqQaGbhLY1_0JZMg0nGny7NbTrHdl7EGk');
 bot.login('MTAyOTY4NzU5Nzk4NDkwNzMyNA.GWwzcJ.slo7cN7cJyj0Gy8a7cqPVv9gR-4T4JydgGRNYE').then(()=>{console.log('DS Ready!')})
 botTg.launch().then(()=>{console.log('TG Ready!')})
 const users_ns = require('./memory/users.json');
-setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*5);
+setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*20);
 
 botTg.command('start', (ctx) => {
     if(!users_ns.user[ctx.from.id]){
@@ -55,7 +55,7 @@ bot.on('interactionCreate', async interaction=> {
     }}
 })
 
-cron.schedule('0 0-23 * * *', async function(){
+cron.schedule('0-59 0-23 * * *', async function(){
     for (let i in users_ns.user){
         let us = users_ns.user[i]
         let date = new Date()
@@ -79,13 +79,17 @@ cron.schedule('0 0-23 * * *', async function(){
                 await packageAlert(diary, arr0, arr, 'mark')
                 let intersect = await intersection(arr0, arr);
                 if (intersect[0]) {
-                    sendAlert(intersect, us.id ,'Вам выставили оценку', intersect[0].mark);
+                    let type =[]
+                    for (let i in intersect) {
+                        type.push(intersect[i].mark)
+                    }
+                    sendAlert(intersect, us.id ,'Вам выставили оценку', type);
                 }
             }
             if(us.assets.homeWork === true){
                 let arr0 = us.arrHomeWork;
                 let arr = [];
-                date.setMonth(date.getMonth() + 1)
+                date.setMonth(date.getMonth() + 2)
                 const diary = await user.diary({
                     start: new Date(),
                     end: date,
@@ -93,7 +97,11 @@ cron.schedule('0 0-23 * * *', async function(){
                 await packageAlert(diary, arr0, arr, 'homeWork')
                 let intersect = await intersection(arr0, arr);
                 if(intersect[0]){
-                    sendAlert(intersect, us.id,'Известно дз', intersect[0].homeWork)
+                    let type =[]
+                    for (let i in intersect) {
+                        type.push(intersect[i].homeWork)
+                    }
+                    sendAlert(intersect, us.id,'Известно дз', type)
                 }
             }
             await user.logOut()
@@ -108,9 +116,9 @@ cron.schedule('0 0-23 * * *', async function(){
 function sendAlert(msg, id , content , type){
     let result = []
     for (let i in msg) {
-        result.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} ${msg[i].lesson} ${type}`)
+        result.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} <b>${msg[i].lesson}</b>: <code>${type[i]}</code>`)
     }
-    botTg.telegram.sendMessage(id, `${content}: ${result}`)
+    botTg.telegram.sendMessage(id, `${content}: ${result}`,Extra.HTML())
 }
 
 function intersection(arr0, arr) {
@@ -140,41 +148,35 @@ function packageAlert(diary,  arr0, arr, type) {
             for (let key3 in diary.days[key].lessons[key2].assignments){
                 if (diary.days[key].lessons[key2].assignments[key3]){
                     let d = diary.days[key].lessons[key2].assignments[key3];
-                    if(type === 'mark'){
-                        if (d.mark !== null){
-                            if(diary.days[key].lessons[key2].subject ==='Основы безопасности жизнедеятельности'){
+                    let subject = diary.days[key].lessons[key2].subject
+                    if(type === 'homeWork'){
+                        if(subject === 'Основы безопасности жизнедеятельности' || subject === 'Физкультура' || subject === 'функциональная гр.' || subject === 'Родной язык' || subject === 'Родная литература')return;
+                        if (d.text !== undefined && d.text !== '---Не указана---' && d.text !== '-'){
+                            {
                                 arr.push({
                                     id: d.id,
                                     date: diary.days[key]._date.slice(0,10),
-                                    lesson: 'ОБЖ',
-                                    mark: type,
-                                });
-                            }else{
-                                arr.push({
-                                    id: d.id,
-                                    date: diary.days[key]._date.slice(0,10),
-                                    lesson: diary.days[key].lessons[key2].subject,
-                                    mark: type,
+                                    lesson: subject,
+                                    homeWork: d.text,
                                 });
                             }
                         }
                     }
-                    else if(type === 'homeWork'){
-                        if (d.text !== undefined){
-                            if(diary.days[key].lessons[key2].subject === 'Физкультура')return;
-                            if(diary.days[key].lessons[key2].subject ==='Основы безопасности жизнедеятельности'){
+                    if(type === 'mark'){
+                        if (d.mark !== null){
+                            if(subject ==='Основы безопасности жизнедеятельности'){
                                 arr.push({
                                     id: d.id,
                                     date: diary.days[key]._date.slice(0,10),
                                     lesson: 'ОБЖ',
-                                    homeWork: d.text,
+                                    mark: d.mark,
                                 });
                             }else{
                                 arr.push({
                                     id: d.id,
                                     date: diary.days[key]._date.slice(0,10),
-                                    lesson: diary.days[key].lessons[key2].subject,
-                                    homeWork: d.text,
+                                    lesson: subject,
+                                    mark: d.mark,
                                 });
                             }
                         }
