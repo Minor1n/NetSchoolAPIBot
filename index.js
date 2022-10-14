@@ -55,11 +55,12 @@ bot.on('interactionCreate', async interaction=> {
     }}
 })
 
-cron.schedule('0 0-23 * * *', async function(){
+cron.schedule('0-59 0-23 * * *', async function(){
     for (let i in users_ns.user){
         let us = users_ns.user[i]
         let date = new Date()
-        if(us.login === null || us.password === null || us.school === null) return;
+        if(us.login !== null && us.password !== null && us.school !== null)
+        console.log('123')
         const user = new NS({
             origin: "https://region.obramur.ru/",
             login: us.login,
@@ -76,7 +77,9 @@ cron.schedule('0 0-23 * * *', async function(){
                     start: date,
                     end: new Date(),
                 });
+                console.log(arr0)
                 await packageAlert(diary, arr0, arr, 'mark')
+                console.log(arr0)
                 let intersect = await intersection(arr0, arr);
                 if (intersect[0]) {
                     let type =[]
@@ -84,6 +87,7 @@ cron.schedule('0 0-23 * * *', async function(){
                         type.push(intersect[i].mark)
                     }
                     sendAlert(intersect, us.id ,'Вам выставили оценку', type);
+                    console.log(arr0)
                 }
             }
             if(us.assets.homeWork === true){
@@ -94,7 +98,9 @@ cron.schedule('0 0-23 * * *', async function(){
                     start: new Date(),
                     end: date,
                 });
+                console.log(arr0)
                 await packageAlert(diary, arr0, arr, 'homeWork')
+                console.log(arr0)
                 let intersect = await intersection(arr0, arr);
                 if(intersect[0]){
                     let type =[]
@@ -103,8 +109,10 @@ cron.schedule('0 0-23 * * *', async function(){
                     }
                     sendAlert(intersect, us.id,'Известно дз', type)
                 }
+                console.log(arr0)
             }
             await user.logOut()
+            //console.log(us.arrMarks)
         }
         catch(err) {
             await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
