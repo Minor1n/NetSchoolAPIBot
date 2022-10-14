@@ -1,5 +1,39 @@
 {
 	"user": {
+		"814757345": {
+			"id": 814757345,
+			"name": "old_pawuk",
+			"login": null,
+			"password": null,
+			"school": null,
+			"assets": {
+				"marks": false,
+				"homeWork": false
+			},
+			"arrMarks": [
+				null
+			],
+			"arrHomeWork": [
+				null
+			]
+		},
+		"974330450": {
+			"id": 974330450,
+			"name": "Lakeydim",
+			"login": "ЛакейД",
+			"password": "525652Lakeyd",
+			"school": "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
+			"assets": {
+				"marks": true,
+				"homeWork": true
+			},
+			"arrMarks": [
+				null
+			],
+			"arrHomeWork": [
+				null
+			]
+		},
 		"1693247078": {
 			"id": 1693247078,
 			"name": "RINE0NE",
