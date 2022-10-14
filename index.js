@@ -337,7 +337,7 @@ function setUser(user, login, password, school, name, assets) {
 }
 
 botTg.action('marksOff', ctx=>{
-    let firstBtn = ['Появление оценок ✖️','marksOff']
+    let firstBtn = ['Появление оценок ✔️','marksOn']
     let secondBtn = []
     let assets =[]
     let user = users_ns.user[ctx.chat.id]
