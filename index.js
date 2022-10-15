@@ -29,7 +29,7 @@ botTg.command('start', (ctx) => {
             homeWork: false,
         }
 
-        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets)
+        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
         ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
     }
 })
@@ -59,64 +59,59 @@ cron.schedule('0-59 0-23 * * *', async function(){
     for (let i in users_ns.user){
         let us = users_ns.user[i]
         let date = new Date()
-        if(us.login !== null && us.password !== null && us.school !== null)
-        console.log('123')
-        const user = new NS({
-            origin: "https://region.obramur.ru/",
-            login: us.login,
-            password: us.password,
-            school: us.school,
-        });
-        try {
-            await user.logIn()
-            if (us.assets.marks === true){
-                let arr0 = us.arrMarks;
-                let arr = [];
-                date.setMonth(date.getMonth() - 1)
-                const diary = await user.diary({
-                    start: date,
-                    end: new Date(),
-                });
-                console.log(arr0)
-                await packageAlert(diary, arr0, arr, 'mark')
-                console.log(arr0)
-                let intersect = await intersection(arr0, arr);
-                if (intersect[0]) {
-                    let type =[]
-                    for (let i in intersect) {
-                        type.push(intersect[i].mark)
+        if(us.login !== null && us.password !== null && us.school !== null){
+            const user = new NS({
+                origin: "https://region.obramur.ru/",
+                login: us.login,
+                password: us.password,
+                school: us.school,
+            });
+            try {
+                await user.logIn()
+                //let inf = await user.info()
+                //console.log(`${inf.lastName} ${inf.firstName} ${inf.middleName} был обновлен!`)
+                if (us.assets.marks === true){
+                    let arr0 = us.arrMarks;
+                    let arr = [];
+                    date.setMonth(date.getMonth() - 1)
+                    const diary = await user.diary({
+                        start: date,
+                        end: new Date(),
+                    });
+                    await packageAlert(diary, arr0, arr, 'mark')
+                    let intersect = await intersection(arr0, arr);
+                    if (intersect[0]) {
+                        let type =[]
+                        for (let i in intersect) {
+                            type.push(intersect[i].mark)
+                        }
+                        sendAlert(intersect, us.id ,'Вам выставили оценку', type);
                     }
-                    sendAlert(intersect, us.id ,'Вам выставили оценку', type);
-                    console.log(arr0)
                 }
-            }
-            if(us.assets.homeWork === true){
-                let arr0 = us.arrHomeWork;
-                let arr = [];
-                date.setMonth(date.getMonth() + 2)
-                const diary = await user.diary({
-                    start: new Date(),
-                    end: date,
-                });
-                console.log(arr0)
-                await packageAlert(diary, arr0, arr, 'homeWork')
-                console.log(arr0)
-                let intersect = await intersection(arr0, arr);
-                if(intersect[0]){
-                    let type =[]
-                    for (let i in intersect) {
-                        type.push(intersect[i].homeWork)
+                if(us.assets.homeWork === true){
+                    let arr0 = us.arrHomeWork;
+                    let arr = [];
+                    date.setMonth(date.getMonth() + 2)
+                    const diary = await user.diary({
+                        start: new Date(),
+                        end: date,
+                    });
+                    await packageAlert(diary, arr0, arr, 'homeWork')
+                    let intersect = await intersection(arr0, arr);
+                    if(intersect[0]){
+                        let type =[]
+                        for (let i in intersect) {
+                            type.push(intersect[i].homeWork)
+                        }
+                        sendAlert(intersect, us.id,'Известно дз', type)
                     }
-                    sendAlert(intersect, us.id,'Известно дз', type)
                 }
-                console.log(arr0)
+                await user.logOut()
             }
-            await user.logOut()
-            //console.log(us.arrMarks)
-        }
-        catch(err) {
-            await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
-            users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name)
+            catch(err) {
+                await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
+                users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name, users_ns.user[i].assets, users_ns.user[i].arrMarks, users_ns.user[i].arrHomeWork)
+            }
         }
     }
 })
@@ -275,7 +270,7 @@ async function check(interaction){
         return result[0];
     }
     result.push('Вы успешно вошли!')
-    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name, users_ns.user[id].assets)
+    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name, users_ns.user[id].assets, users_ns.user[id].arrMarks, users_ns.user[id].arrHomeWork)
     log(interaction, id, login, password, info, users_ns.user[id].name)
     welcome(id, login, password, info)
     return result[0];
@@ -334,7 +329,7 @@ function welcome(id, login, password, info){
     )
 }
 
-function setUser(user, login, password, school, name, assets) {
+function setUser(user, login, password, school, name, assets, arrMarks, arrHomeWork) {
     return{
         id: Number(user),
         name: name,
@@ -342,8 +337,8 @@ function setUser(user, login, password, school, name, assets) {
         password: password,
         school: school,
         assets: assets,
-        arrMarks: [null],
-        arrHomeWork:[null],
+        arrMarks: arrMarks,
+        arrHomeWork: arrHomeWork,
     }
 }
 
@@ -435,5 +430,5 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
             [Markup.callbackButton(firstButton[0],firstButton[1]),Markup.callbackButton(secondButton[0],secondButton[1])]
         ])
     ))
-    users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0])
+    users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0],user.arrMarks,user.arrHomeWork)
 }
