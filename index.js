@@ -55,7 +55,7 @@ bot.on('interactionCreate', async interaction=> {
     }}
 })
 
-cron.schedule('0-59 0-23 * * *', async function(){
+cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
     for (let i in users_ns.user){
         let us = users_ns.user[i]
         let date = new Date()
@@ -68,8 +68,8 @@ cron.schedule('0-59 0-23 * * *', async function(){
             });
             try {
                 await user.logIn()
-                //let inf = await user.info()
-                //console.log(`${inf.lastName} ${inf.firstName} ${inf.middleName} был обновлен!`)
+                let inf = await user.info()
+                console.log(`${new Date()} \"${inf.lastName} ${inf.firstName} ${inf.middleName}\" был обновлен!`)
                 if (us.assets.marks === true){
                     let arr0 = us.arrMarks;
                     let arr = [];
@@ -109,8 +109,9 @@ cron.schedule('0-59 0-23 * * *', async function(){
                 await user.logOut()
             }
             catch(err) {
-                await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
-                users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name, users_ns.user[i].assets, users_ns.user[i].arrMarks, users_ns.user[i].arrHomeWork)
+                console.log(err)
+                //await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
+                //users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name, users_ns.user[i].assets, users_ns.user[i].arrMarks, users_ns.user[i].arrHomeWork)
             }
         }
     }

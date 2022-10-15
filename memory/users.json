@@ -263,9 +263,9 @@
 		"1693247078": {
 			"id": 1693247078,
 			"name": "RINE0NE",
-			"login": null,
-			"password": null,
-			"school": null,
+			"login": "КоропА",
+			"password": "2e2r6t6y7u7i",
+			"school": "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
 			"assets": {
 				"marks": true,
 				"homeWork": true
