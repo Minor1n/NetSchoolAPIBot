@@ -263,9 +263,9 @@
 		"1693247078": {
 			"id": 1693247078,
 			"name": "RINE0NE",
-			"login": "КоропА",
-			"password": "2e2r6t6y7u7i",
-			"school": "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
+			"login": null,
+			"password": null,
+			"school": null,
 			"assets": {
 				"marks": true,
 				"homeWork": true
@@ -421,9 +421,9 @@
 		},
 		"1732858807": {
 			"id": 1732858807,
-			"login": "КоропП",
-			"password": "8881628120",
-			"school": "МАОУ \"Школа № 10 г. Благовещенска\"",
+			"login": null,
+			"password": null,
+			"school": null,
 			"assets": {
 				"marks": true,
 				"homeWork": true
