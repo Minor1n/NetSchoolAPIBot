@@ -117,6 +117,37 @@ cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
     }
 })
 
+cron.schedule('30 8 * * *', async function() {
+    for (let i in users_ns.user) {
+        let us = users_ns.user[i]
+        let date = new Date()
+        if (us.login !== null && us.password !== null && us.school !== null) {
+            const user = new NS({
+                origin: "https://region.obramur.ru/",
+                login: us.login,
+                password: us.password,
+                school: us.school,
+            });
+            try {
+                await user.logIn()
+                let inf = await user.info()
+                console.log(`${new Date()} \"${inf.lastName} ${inf.firstName} ${inf.middleName}\" получил расписание!`)
+                if(us.assets.timetable ===true){
+
+                }
+                await user.logOut()
+            }
+            catch(err) {
+                console.log(err)
+                //await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
+                //users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name, users_ns.user[i].assets, users_ns.user[i].arrMarks, users_ns.user[i].arrHomeWork)
+            }
+        }
+    }
+})
+
+
+
 function sendAlert(msg, id , content , type){
     let result = []
     for (let i in msg) {
@@ -433,3 +464,20 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
     ))
     users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0],user.arrMarks,user.arrHomeWork)
 }
+
+/*(async function(){
+    let user = new NS({
+        origin: "https://region.obramur.ru/",
+        login: "КоропА",
+        password: "2e2r6t6y7u7i",
+        school: "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
+    })
+    await user.logIn()
+    const diary = await user.diary({
+        start: new Date(),
+        end: new Date("2022-10-18"),
+    });
+    console.log(diary.days[1].lessons[3]);
+    await user.logOut()
+
+})()*/
