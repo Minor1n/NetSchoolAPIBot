@@ -477,7 +477,7 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
         end: new Date("2022-10-18"),
     });
     console.log(diary.days[1].lessons[3]);
-    await user.logOut()*/
+    await user.logOut()*//*
 
     let date = new Date('2022-10-15')
     console.log(date.toLocaleString('ru-ru', {  weekday: 'short' }));
