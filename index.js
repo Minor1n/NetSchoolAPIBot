@@ -117,7 +117,7 @@ cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
     }
 })
 
-cron.schedule('30 8 * * *', async function() {
+/*cron.schedule('30 8 * * *', async function() {
     for (let i in users_ns.user) {
         let us = users_ns.user[i]
         let date = new Date()
@@ -144,14 +144,13 @@ cron.schedule('30 8 * * *', async function() {
             }
         }
     }
-})
-
-
+})*/
 
 function sendAlert(msg, id , content , type){
     let result = []
     for (let i in msg) {
-        result.push(`\n${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} <b>${msg[i].lesson}</b>: <code>${type[i]}</code>`)
+        let date = new Date(msg[i].date)
+        result.push(`\n${date.toLocaleString('ru-ru', {  weekday: 'short' })} ${msg[i].date.slice(8,)}.${msg[i].date.slice(5,7)} <b>${msg[i].lesson}</b>: <code>${type[i]}</code>`)
     }
     botTg.telegram.sendMessage(id, `${content}: ${result}`,Extra.HTML())
 }
@@ -466,7 +465,7 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
 }
 
 /*(async function(){
-    let user = new NS({
+   /* let user = new NS({
         origin: "https://region.obramur.ru/",
         login: "КоропА",
         password: "2e2r6t6y7u7i",
@@ -478,6 +477,9 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
         end: new Date("2022-10-18"),
     });
     console.log(diary.days[1].lessons[3]);
-    await user.logOut()
+    await user.logOut()*/
+
+    let date = new Date('2022-10-15')
+    console.log(date.toLocaleString('ru-ru', {  weekday: 'short' }));
 
 })()*/
