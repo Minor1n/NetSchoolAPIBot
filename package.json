@@ -4,8 +4,6 @@
     "discord.js": "^14.6.0",
     "netschoolapi": "^1.7.3",
     "node-cron": "^3.0.2",
-    "table": "^6.8.0",
-    "telegraf": "3.39",
-    "text2png": "^2.3.0"
+    "telegraf": "3.39"
   }
 }

@@ -1,25 +1,26 @@
-const { Telegraf, Markup, Extra} = require('telegraf');
-const cron = require('node-cron');
-const fs = require("fs");
-const NS = require("netschoolapi").Safe;
-const Discord = require('discord.js');
-const {GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-bot = new Discord.Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.DirectMessageTyping,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
-    ],
-    partials: [
-        Partials.Channel
-    ]
-});
-const botTg = new Telegraf('5776158150:AAFqQaGbhLY1_0JZMg0nGny7NbTrHdl7EGk');
+const
+    { Telegraf, Markup, Extra} = require('telegraf'),
+    cron = require('node-cron'),
+    fs = require("fs"),
+    NS = require("netschoolapi").Safe,
+    Discord = require('discord.js'),
+    {GatewayIntentBits, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js'),
+    bot = new Discord.Client({
+        intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.DirectMessages,
+            GatewayIntentBits.DirectMessageTyping,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.MessageContent,
+        ],
+        partials: [
+            Partials.Channel
+        ]
+    }),
+    botTg = new Telegraf('5776158150:AAFqQaGbhLY1_0JZMg0nGny7NbTrHdl7EGk'),
+    users_ns = require('./memory/users.json');
 bot.login('MTAyOTY4NzU5Nzk4NDkwNzMyNA.GWwzcJ.slo7cN7cJyj0Gy8a7cqPVv9gR-4T4JydgGRNYE').then(()=>{console.log('DS Ready!')})
 botTg.launch().then(()=>{console.log('TG Ready!')})
-const users_ns = require('./memory/users.json');
 setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*20);
 
 botTg.command('start', (ctx) => {
@@ -463,9 +464,15 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
     ))
     users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0],user.arrMarks,user.arrHomeWork)
 }
-
-/*(async function(){
-   /* let user = new NS({
+/*
+const
+    nodeHtmlToImage = require('node-html-to-image'),
+    XLSX = require("xlsx"),
+    workbook = XLSX.readFile("./table.xlsx"),
+    text2png  = require('text2png'),
+    { table } = require('table');
+(async function(){
+   let user = new NS({
         origin: "https://region.obramur.ru/",
         login: "КоропА",
         password: "2e2r6t6y7u7i",
@@ -477,9 +484,45 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
         end: new Date("2022-10-18"),
     });
     console.log(diary.days[1].lessons[3]);
-    await user.logOut()*//*
+    await user.logOut()
 
     let date = new Date('2022-10-15')
     console.log(date.toLocaleString('ru-ru', {  weekday: 'short' }));
+
+    const data = [
+        ['День', 'Время', 'Предмет', 'Кабинет', 'Дз'],
+        ['День', 'Время', 'Предмет', 'Кабинет', 'Дз'],
+        ['День', 'Время', 'Предмет', 'Кабинет', 'Дз']
+    ];
+    fs.writeFileSync('out.png',
+        text2png(table(data), {
+        font: '80px Futura',
+        color: '#1C1C1C',
+        backgroundColor: 'linen',
+        lineSpacing: 10,
+        padding: 20
+    }))
+
+    nodeHtmlToImage({
+        output: './image.png',
+        html: html,
+    })
+
+    let worksheets = {};
+    for (const sheetName of workbook.SheetNames) {
+        // Some helper functions in XLSX.utils generate different views of the sheets:
+        //     XLSX.utils.sheet_to_csv generates CSV
+        //     XLSX.utils.sheet_to_txt generates UTF16 Formatted Text
+        //     XLSX.utils.sheet_to_html generates HTML
+        //     XLSX.utils.sheet_to_json generates an array of objects
+        //     XLSX.utils.sheet_to_formulae generates a list of formulae
+        worksheets[sheetName] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    }
+    console.log("json:\n", JSON.stringify(worksheets.Sheet1), "\n\n")
+
+    nodeHtmlToImage({
+        output: './image.png',
+        html: worksheets[1],
+    })
 
 })()*/
