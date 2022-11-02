@@ -23,16 +23,15 @@ bot.login('MTAyOTY4NzU5Nzk4NDkwNzMyNA.GWwzcJ.slo7cN7cJyj0Gy8a7cqPVv9gR-4T4JydgGR
 botTg.launch().then(()=>{console.log('TG Ready!')})
 setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*20);
 
-botTg.action('start', (ctx) => {
+botTg.command('start', (ctx) => {
     if(!users_ns.user[ctx.from.id]){
         let assets = {
             marks: false,
             homeWork: false,
         }
-
         users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
-        ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
     }
+    ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
 })
 bot.on('messageCreate', msg => {
     //if(msg.content === 'log'){sendLog(msg);}
