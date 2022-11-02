@@ -23,7 +23,7 @@ bot.login('MTAyOTY4NzU5Nzk4NDkwNzMyNA.GWwzcJ.slo7cN7cJyj0Gy8a7cqPVv9gR-4T4JydgGR
 botTg.launch().then(()=>{console.log('TG Ready!')})
 setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*20);
 
-botTg.command('start', (ctx) => {
+botTg.action('start', (ctx) => {
     if(!users_ns.user[ctx.from.id]){
         let assets = {
             marks: false,
