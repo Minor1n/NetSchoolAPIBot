@@ -23,16 +23,45 @@ bot.login('MTAyOTY4NzU5Nzk4NDkwNzMyNA.GWwzcJ.slo7cN7cJyj0Gy8a7cqPVv9gR-4T4JydgGR
 botTg.launch().then(()=>{console.log('TG Ready!')})
 setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*20);
 
-botTg.command('start', (ctx) => {
+botTg.command('start', (ctx) => {registration(ctx)})
+botTg.command('registration', (ctx) => {registration(ctx)})
+botTg.command('notice', async ctx=> {
+    let arr = []
     if(!users_ns.user[ctx.from.id]){
         let assets = {
             marks: false,
             homeWork: false,
         }
         users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
+    }else{
+        let us = users_ns.user[ctx.chat.id]
+        const user = new NS({
+            origin: "https://region.obramur.ru/",
+            login: us.login,
+            password: us.password,
+            school: us.school,
+        });
+        try {
+            await user.logIn()
+            if(us.assets.marks === true){arr.push('Появление оценок ✔️','marksOn')}
+            else{arr.push('Появление оценок ✖️','marksOff')}
+            if(us.assets.homeWork === true){arr.push('Появление дз ✔️️','homeWorkOn')}
+            else{arr.push('Появление дз ✖️','homeWorkOff')}
+            await ctx.reply(`Выберите виды уведомлений`,
+                Extra.markup(
+                    Markup.inlineKeyboard([
+                        [Markup.callbackButton(arr[0], arr[1]),Markup.callbackButton(arr[2], arr[3])]
+                    ])
+                )
+            )
+            await user.logOut()
+        }catch (e) {
+            await ctx.reply('Сначала войдите!')
+            registration(ctx)
+        }
     }
-    ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
 })
+
 bot.on('messageCreate', msg => {
     //if(msg.content === 'log'){sendLog(msg);}
 })
@@ -117,34 +146,16 @@ cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
     }
 })
 
-/*cron.schedule('30 8 * * *', async function() {
-    for (let i in users_ns.user) {
-        let us = users_ns.user[i]
-        let date = new Date()
-        if (us.login !== null && us.password !== null && us.school !== null) {
-            const user = new NS({
-                origin: "https://region.obramur.ru/",
-                login: us.login,
-                password: us.password,
-                school: us.school,
-            });
-            try {
-                await user.logIn()
-                let inf = await user.info()
-                console.log(`${new Date()} \"${inf.lastName} ${inf.firstName} ${inf.middleName}\" получил расписание!`)
-                if(us.assets.timetable ===true){
-
-                }
-                await user.logOut()
-            }
-            catch(err) {
-                console.log(err)
-                //await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
-                //users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name, users_ns.user[i].assets, users_ns.user[i].arrMarks, users_ns.user[i].arrHomeWork)
-            }
+function registration(ctx){
+    if(!users_ns.user[ctx.from.id]){
+        let assets = {
+            marks: false,
+            homeWork: false,
         }
+        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
     }
-})*/
+    ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
+}
 
 function sendAlert(msg, id , content , type){
     let result = []
@@ -463,65 +474,3 @@ function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
     ))
     users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0],user.arrMarks,user.arrHomeWork)
 }
-/*
-const
-    nodeHtmlToImage = require('node-html-to-image'),
-    XLSX = require("xlsx"),
-    workbook = XLSX.readFile("./table.xlsx"),
-    text2png  = require('text2png'),
-    { table } = require('table');
-(async function(){
-   let user = new NS({
-        origin: "https://region.obramur.ru/",
-        login: "КоропА",
-        password: "2e2r6t6y7u7i",
-        school: "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
-    })
-    await user.logIn()
-    const diary = await user.diary({
-        start: new Date(),
-        end: new Date("2022-10-18"),
-    });
-    console.log(diary.days[1].lessons[3]);
-    await user.logOut()
-
-    let date = new Date('2022-10-15')
-    console.log(date.toLocaleString('ru-ru', {  weekday: 'short' }));
-
-    const data = [
-        ['День', 'Время', 'Предмет', 'Кабинет', 'Дз'],
-        ['День', 'Время', 'Предмет', 'Кабинет', 'Дз'],
-        ['День', 'Время', 'Предмет', 'Кабинет', 'Дз']
-    ];
-    fs.writeFileSync('out.png',
-        text2png(table(data), {
-        font: '80px Futura',
-        color: '#1C1C1C',
-        backgroundColor: 'linen',
-        lineSpacing: 10,
-        padding: 20
-    }))
-
-    nodeHtmlToImage({
-        output: './image.png',
-        html: html,
-    })
-
-    let worksheets = {};
-    for (const sheetName of workbook.SheetNames) {
-        // Some helper functions in XLSX.utils generate different views of the sheets:
-        //     XLSX.utils.sheet_to_csv generates CSV
-        //     XLSX.utils.sheet_to_txt generates UTF16 Formatted Text
-        //     XLSX.utils.sheet_to_html generates HTML
-        //     XLSX.utils.sheet_to_json generates an array of objects
-        //     XLSX.utils.sheet_to_formulae generates a list of formulae
-        worksheets[sheetName] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-    }
-    console.log("json:\n", JSON.stringify(worksheets.Sheet1), "\n\n")
-
-    nodeHtmlToImage({
-        output: './image.png',
-        html: worksheets[1],
-    })
-
-})()*/
