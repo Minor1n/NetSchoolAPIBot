@@ -26,15 +26,14 @@ setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns,
 botTg.command('start', (ctx) => {registration(ctx)})
 botTg.command('registration', (ctx) => {registration(ctx)})
 botTg.command('notice', async ctx=> {
-    let arr = []
-    if(!users_ns.user[ctx.from.id]){
+    let us = users_ns.user[ctx.chat.id]
+    if(!us){
         let assets = {
             marks: false,
             homeWork: false,
         }
-        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
+        us = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
     }else{
-        let us = users_ns.user[ctx.chat.id]
         const user = new NS({
             origin: "https://region.obramur.ru/",
             login: us.login,
@@ -42,19 +41,11 @@ botTg.command('notice', async ctx=> {
             school: us.school,
         });
         try {
-            await user.logIn()
-            if(us.assets.marks === true){arr.push('Появление оценок ✔️','marksOn')}
-            else{arr.push('Появление оценок ✖️','marksOff')}
-            if(us.assets.homeWork === true){arr.push('Появление дз ✔️️','homeWorkOn')}
-            else{arr.push('Появление дз ✖️','homeWorkOff')}
-            await ctx.reply(`Выберите виды уведомлений`,
-                Extra.markup(
-                    Markup.inlineKeyboard([
-                        [Markup.callbackButton(arr[0], arr[1]),Markup.callbackButton(arr[2], arr[3])]
-                    ])
-                )
-            )
-            await user.logOut()
+            let arr = []
+            await user.logIn().then(await user.logOut())
+            if(us.assets.marks === true){arr.push('Появление оценок ✔️','marksOn')}else{arr.push('Появление оценок ✖️','marksOff')}
+            if(us.assets.homeWork === true){arr.push('Появление дз ✔️️','homeWorkOn')}else{arr.push('Появление дз ✖️','homeWorkOff')}
+            await ctx.reply(`Выберите виды уведомлений`, Extra.markup(Markup.inlineKeyboard([[Markup.callbackButton(arr[0], arr[1]),Markup.callbackButton(arr[2], arr[3])]])))
         }catch (e) {
             await ctx.reply('Сначала войдите!')
             registration(ctx)
