@@ -186,7 +186,7 @@ function packageAlert(diary,  arr0, arr, type) {
                     let d = diary.days[key].lessons[key2].assignments[key3];
                     let subject = diary.days[key].lessons[key2].subject
                     if(type === 'homeWork'){
-                        if(subject !== 'Основы безопасности жизнедеятельности' && subject !== 'Физкультура' && subject !== 'функциональная гр.' && subject !== 'Родной язык' && subject !== 'Родная литература'){
+                        if(subject !== 'Основы безопасности жизнедеятельности' && subject !== 'Физкультура' && subject !== 'функциональная гр.' && subject !== 'Разговоры важном'){
                             if (d.text !== undefined && d.text !== '---Не указана---' && d.text !== '-'){
                                 {
                                     arr.push({
