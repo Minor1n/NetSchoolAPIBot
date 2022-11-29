@@ -137,7 +137,7 @@ cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
     }
 })
 
-cron.schedule('40 13 * * *', async function(){
+cron.schedule('40 7 * * *', async function(){
     for (let i in users_ns.user) {
         let us = users_ns.user[i]
         let date = new Date()
