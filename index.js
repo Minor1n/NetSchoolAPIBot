@@ -137,6 +137,41 @@ cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
     }
 })
 
+cron.schedule('40 13 * * *', async function(){
+    for (let i in users_ns.user) {
+        let us = users_ns.user[i]
+        let date = new Date()
+        if (us.login !== null && us.password !== null && us.school !== null) {
+            const user = new NS({
+                origin: "https://region.obramur.ru/",
+                login: us.login,
+                password: us.password,
+                school: us.school,
+            });
+            try {
+                await user.logIn()
+                if (us.id === 1693247078){
+                    let arr0 = null;
+                    let arr = [];
+                    let result = [];
+                    date.setDate(date.getDate()+1)
+                    const diary = await user.diary({
+                        start: date,
+                        end: date,
+                    });
+                    console.log(diary.days[0].lessons)
+                    await packageAlert(diary, arr0, arr, 'nextDay')
+                    if(arr[0]){
+                        for(let i in arr){result.push(`\n<b>${arr[i].lesson}</b>: <code>${arr[i].homeWork}</code>`)}
+                        await botTg.telegram.sendMessage(1693247078, `ДЗ на завтра(${date.toLocaleString('ru-ru', {  weekday: 'short' })} ${date.getDate()}.${date.getMonth()})${result}`, Extra.HTML())
+                    }
+                }
+                await user.logOut()
+            }catch (err) {console.log(err)}
+        }
+    }
+})
+
 function registration(ctx){
     if(!users_ns.user[ctx.from.id]){
         let assets = {
@@ -181,6 +216,21 @@ function intersection(arr0, arr) {
 function packageAlert(diary,  arr0, arr, type) {
     for(let key in diary.days) {
         for (let key2 in diary.days[key].lessons) {
+            if(type ==='nextDay'){
+                let d = diary.days[key].lessons[key2]
+                let subject = diary.days[key].lessons[key2].subject
+                if(subject ==='Основы безопасности жизнедеятельности'){
+                    arr.push({
+                        lesson: 'ОБЖ',
+                        homeWork: hw(d),
+                    });
+                }else{
+                    arr.push({
+                        lesson: subject,
+                        homeWork: hw(d),
+                    });
+                }
+            }
             for (let key3 in diary.days[key].lessons[key2].assignments){
                 if (diary.days[key].lessons[key2].assignments[key3]){
                     let d = diary.days[key].lessons[key2].assignments[key3];
@@ -222,6 +272,15 @@ function packageAlert(diary,  arr0, arr, type) {
             }
         }
     }
+}
+
+function hw(d){
+    if(!d.assignments[0]){return 'Не задано'}
+    else
+    if(d.assignments[0].text !== undefined && d.assignments[0].text !== '---Не указана---' && d.assignments[0].text !== '-'){
+        return d.assignments[0].text
+    }
+    else{return 'Не задано'}
 }
 
 function sendLog(msg){
