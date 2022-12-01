@@ -31,8 +31,9 @@ botTg.command('notice', async ctx=> {
         let assets = {
             marks: false,
             homeWork: false,
+            nextDayHomeWork: false,
         }
-        us = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
+        us = setUser(ctx.from.id, null,null,null, ctx.from.username, assets,13,0, [null], [null])
     }else{
         const user = new NS({
             origin: "https://region.obramur.ru/",
@@ -41,17 +42,34 @@ botTg.command('notice', async ctx=> {
             school: us.school,
         });
         try {
+            let date = new Date()
+            date.setHours(us.time.hours, us.time.minutes)
             let arr = []
             await user.logIn().then(await user.logOut())
             if(us.assets.marks === true){arr.push('Появление оценок ✔️','marksOn')}else{arr.push('Появление оценок ✖️','marksOff')}
             if(us.assets.homeWork === true){arr.push('Появление дз ✔️️','homeWorkOn')}else{arr.push('Появление дз ✖️','homeWorkOff')}
-            await ctx.reply(`Выберите виды уведомлений`, Extra.markup(Markup.inlineKeyboard([[Markup.callbackButton(arr[0], arr[1]),Markup.callbackButton(arr[2], arr[3])]])))
+            if(us.assets.nextDayHomeWork === true){arr.push('Свод дз ✔️','nextDayHomeWorkOn')}else{arr.push('Свод дз ✖️️','nextDayHomeWorkOff')}
+            arr.push(`${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}`,'timeBtn')
+            await ctx.reply(`Настройка уведомлений`,
+                Extra.markup(Markup.inlineKeyboard(
+                    [
+                        [
+                            Markup.callbackButton(arr[0], arr[1]),
+                            Markup.callbackButton(arr[2], arr[3])
+                        ],
+                        [
+                            Markup.callbackButton(arr[4], arr[5]),
+                            Markup.callbackButton(arr[6], arr[7])
+                        ]
+                    ]
+                ))
+            )
         }catch (e) {
             await ctx.reply('Сначала войдите!')
             registration(ctx)
         }
     }
-})
+});
 
 bot.on('messageCreate', msg => {
     //if(msg.content === 'log'){sendLog(msg);}
@@ -75,7 +93,7 @@ bot.on('interactionCreate', async interaction=> {
     }}
 })
 
-cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
+cron.schedule('0,10,20,30,40,50 0-23 * * *', async function(){
     for (let i in users_ns.user){
         let us = users_ns.user[i]
         let date = new Date()
@@ -126,6 +144,24 @@ cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
                         sendAlert(intersect, us.id,'Известно дз', type)
                     }
                 }
+                if (us.assets.nextDayHomeWork === true){
+                    if(us.time.hours === new Date().getHours && us.time.minutes === new Date().getMinutes){
+                        let arr0 = null;
+                        let arr = [];
+                        let result = [];
+                        date.setDate(date.getDate()+1)
+                        const diary = await user.diary({
+                            start: date,
+                            end: date,
+                        });
+                        console.log(diary.days[0].lessons)
+                        await packageAlert(diary, arr0, arr, 'nextDay')
+                        if(arr[0]){
+                            for(let i in arr){result.push(`\n<b>${arr[i].lesson}</b>: <code>${arr[i].homeWork}</code>`)}
+                            await botTg.telegram.sendMessage(us.id, `ДЗ на завтра(${date.toLocaleString('ru-ru', {  weekday: 'short' })} ${date.getDate()}.${date.getMonth()})${result}`, Extra.HTML())
+                        }
+                    }
+                }
                 await user.logOut()
             }
             catch(err) {
@@ -137,48 +173,14 @@ cron.schedule('9,19,29,39,49,59 0-23 * * *', async function(){
     }
 })
 
-cron.schedule('40 7 * * *', async function(){
-    for (let i in users_ns.user) {
-        let us = users_ns.user[i]
-        let date = new Date()
-        if (us.login !== null && us.password !== null && us.school !== null) {
-            const user = new NS({
-                origin: "https://region.obramur.ru/",
-                login: us.login,
-                password: us.password,
-                school: us.school,
-            });
-            try {
-                await user.logIn()
-                if (us.id === 1693247078){
-                    let arr0 = null;
-                    let arr = [];
-                    let result = [];
-                    date.setDate(date.getDate()+1)
-                    const diary = await user.diary({
-                        start: date,
-                        end: date,
-                    });
-                    console.log(diary.days[0].lessons)
-                    await packageAlert(diary, arr0, arr, 'nextDay')
-                    if(arr[0]){
-                        for(let i in arr){result.push(`\n<b>${arr[i].lesson}</b>: <code>${arr[i].homeWork}</code>`)}
-                        await botTg.telegram.sendMessage(1693247078, `ДЗ на завтра(${date.toLocaleString('ru-ru', {  weekday: 'short' })} ${date.getDate()}.${date.getMonth()})${result}`, Extra.HTML())
-                    }
-                }
-                await user.logOut()
-            }catch (err) {console.log(err)}
-        }
-    }
-})
-
 function registration(ctx){
     if(!users_ns.user[ctx.from.id]){
         let assets = {
             marks: false,
             homeWork: false,
+            nextDayHomeWork: false,
         }
-        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, [null], [null])
+        users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, 13, 0, [null], [null])
     }
     ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
 }
@@ -362,7 +364,7 @@ async function check(interaction){
         return result[0];
     }
     result.push('Вы успешно вошли!')
-    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name, users_ns.user[id].assets, users_ns.user[id].arrMarks, users_ns.user[id].arrHomeWork)
+    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name, users_ns.user[id].assets, users_ns.user[id].time.hours, users_ns.user[id].time.minutes, users_ns.user[id].arrMarks, users_ns.user[id].arrHomeWork)
     log(interaction, id, login, password, info, users_ns.user[id].name)
     welcome(id, login, password, info)
     return result[0];
@@ -415,13 +417,22 @@ function welcome(id, login, password, info){
         `Приветствую, ${info[0].firstName} ${info[0].middleName}\nВыберите виды уведомлений`,
         Extra.markup(
             Markup.inlineKeyboard([
-                [Markup.callbackButton('Появление оценок ✖️','marksOff'),Markup.callbackButton('Появление дз ✖️','homeWorkOff')]
+                [Markup.callbackButton('Появление оценок ✖️','marksOff'),Markup.callbackButton('Появление дз ✖️','homeWorkOff')],
+                [Markup.callbackButton('Свод дз на следующий день ✖️️','nextDayHomeWorkOff')]
             ])
         )
     )
 }
 
-function setUser(user, login, password, school, name, assets, arrMarks, arrHomeWork) {
+/*(async function(){
+    for(let i in users_ns.user) {
+        let us = users_ns.user[i]
+        users_ns.user[i] = setUser(us.id, us.login, us.password, us.school, us.name, us.assets,13,'00', us.arrMarks, us.arrHomeWork)
+        console.log(users_ns.user[i])
+    }
+}())*/
+
+function setUser(user, login, password, school, name, assets, hours, minutes, arrMarks, arrHomeWork) {
     return{
         id: Number(user),
         name: name,
@@ -429,98 +440,268 @@ function setUser(user, login, password, school, name, assets, arrMarks, arrHomeW
         password: password,
         school: school,
         assets: assets,
+        time:{
+            hours: Number(hours),
+            minutes: Number(minutes),
+        },
         arrMarks: arrMarks,
         arrHomeWork: arrHomeWork,
     }
 }
 
-botTg.action('marksOff', ctx=>{
-    let firstBtn = ['Появление оценок ✔️','marksOn']
-    let secondBtn = []
-    let assets =[]
-    let user = users_ns.user[ctx.chat.id]
-    if(user.assets.homeWork === true){
-        secondBtn.push('Появление дз ✔️️','homeWorkOn')
-        assets.push({
-            marks: true,
-            homeWork: true,
-        })
+function assetsUpdate(checkAssets,checkAssets2,Btn1Text1,Btn1Text2,Btn2Text1,Btn2Text2){
+    arrAssetsPrev = []
+    if(checkAssets === true){
+        arrAssetsPrev.push([true,Btn1Text1])
+
+        if(checkAssets2 === true){
+            arrAssetsPrev.push([true,Btn2Text1])
+        }else{
+            arrAssetsPrev.push([false,Btn2Text2])
+        }
     }else{
-        secondBtn.push('Появление дз ✖️️️','homeWorkOff')
-        assets.push({
-            marks: true,
-            homeWork: false,
-        })
+        arrAssetsPrev.push([false,Btn1Text2])
+
+        if(checkAssets2 === true){
+            arrAssetsPrev.push([true,Btn2Text1])
+        }else{
+            arrAssetsPrev.push([false,Btn2Text2])
+        }
     }
-    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
+    return arrAssetsPrev
+}
+
+botTg.action('marksOff', ctx=>{
+    let arrFirstBtn = ['Появление оценок ✔️','marksOn']
+    let arrSecondBtn = []
+    let arrThirdBtn = []
+    let arrAssets = []
+    let user = users_ns.user[ctx.chat.id]
+    let arrPrev = assetsUpdate(
+        user.assets.homeWork,
+        user.assets.nextDayHomeWork,
+        ['Появление дз ✔️️','homeWorkOn'],
+        ['Появление дз ✖️️️','homeWorkOff'],
+        ['Свод дз ✔️','nextDayHomeWorkOn'],
+        ['Свод дз ✖️','nextDayHomeWorkOff'],
+    )
+    arrSecondBtn.push(arrPrev[0][1][0],arrPrev[0][1][1])
+    arrThirdBtn.push(arrPrev[1][1][0],arrPrev[1][1][1])
+    arrAssets.push({
+        marks: true,
+        homeWork: arrPrev[0][0],
+        nextDayHomeWork: arrPrev[1][0],
+    })
+    buttonUpdate(ctx,arrFirstBtn,arrSecondBtn,arrThirdBtn,user,arrAssets)
 });
 botTg.action('marksOn', ctx=>{
-    let firstBtn = ['Появление оценок ✖️','marksOff']
-    let secondBtn = []
-    let assets =[]
+    let arrFirstBtn = ['Появление оценок ✖️','marksOff']
+    let arrSecondBtn = []
+    let arrThirdBtn = []
+    let arrAssets = []
     let user = users_ns.user[ctx.chat.id]
-    if(user.assets.homeWork === true){
-        secondBtn.push('Появление дз ✔️️','homeWorkOn')
-        assets.push({
-            marks: false,
-            homeWork: true,
-        })
-    }else{
-        secondBtn.push('Появление дз ✖️️️','homeWorkOff')
-        assets.push({
-            marks: false,
-            homeWork: false,
-        })
-    }
-    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
+    let arrPrev = assetsUpdate(
+        user.assets.homeWork,
+        user.assets.nextDayHomeWork,
+        ['Появление дз ✔️️','homeWorkOn'],
+        ['Появление дз ✖️️️','homeWorkOff'],
+        ['Свод дз ✔️','nextDayHomeWorkOn'],
+        ['Свод дз ✖️️','nextDayHomeWorkOff'],
+    )
+    arrSecondBtn.push(arrPrev[0][1][0],arrPrev[0][1][1])
+    arrThirdBtn.push(arrPrev[1][1][0],arrPrev[1][1][1])
+    arrAssets.push({
+        marks: false,
+        homeWork: arrPrev[0][0],
+        nextDayHomeWork: arrPrev[1][0],
+    })
+    buttonUpdate(ctx,arrFirstBtn,arrSecondBtn,arrThirdBtn,user,arrAssets)
 });
 
 botTg.action('homeWorkOff', ctx=>{
-    let firstBtn = []
-    let secondBtn = ['Появление дз ✔️️','homeWorkOn']
-    let assets =[]
+    let arrFirstBtn = []
+    let arrSecondBtn = ['Появление дз ✔️️','homeWorkOn']
+    let arrThirdBtn = []
+    let arrAssets = []
     let user = users_ns.user[ctx.chat.id]
-    if(user.assets.marks === true){
-        firstBtn.push('Появление оценок ✔️','marksOn')
-        assets.push({
-            marks: true,
-            homeWork: true,
-        })
-    }else{
-        firstBtn.push('Появление оценок ✖️','marksOff')
-        assets.push({
-            marks: false,
-            homeWork: true,
-        })
-    }
-    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
+    let arrPrev = assetsUpdate(
+        user.assets.marks,
+        user.assets.nextDayHomeWork,
+        ['Появление оценок ✔️','marksOn'],
+        ['Появление оценок ✖️','marksOff'],
+        ['Свод дз ✔️','nextDayHomeWorkOn'],
+        ['Свод дз ✖️️','nextDayHomeWorkOff'],
+    )
+    arrFirstBtn.push(arrPrev[0][1][0],arrPrev[0][1][1])
+    arrThirdBtn.push(arrPrev[1][1][0],arrPrev[1][1][1])
+    arrAssets.push({
+        marks: arrPrev[0][0],
+        homeWork: true,
+        nextDayHomeWork: arrPrev[1][0],
+    })
+    buttonUpdate(ctx,arrFirstBtn,arrSecondBtn,arrThirdBtn,user,arrAssets)
 });
 botTg.action('homeWorkOn', ctx=>{
-    let firstBtn = []
-    let secondBtn = ['Появление дз ✖️️️','homeWorkOff']
-    let assets =[]
+    let arrFirstBtn = []
+    let arrSecondBtn = ['Появление дз ✖️️️','homeWorkOff']
+    let arrThirdBtn = []
+    let arrAssets = []
     let user = users_ns.user[ctx.chat.id]
-    if(user.assets.marks === true){
-        firstBtn.push('Появление оценок ✔️','marksOn')
-        assets.push({
-            marks: true,
-            homeWork: false,
-        })
-    }else{
-        firstBtn.push('Появление оценок ✖️','marksOff')
-        assets.push({
-            marks: false,
-            homeWork: false,
-        })
-    }
-    buttonUpdate(ctx,firstBtn,secondBtn,user,assets)
+    let arrPrev = assetsUpdate(
+        user.assets.marks,
+        user.assets.nextDayHomeWork,
+        ['Появление оценок ✔️','marksOn'],
+        ['Появление оценок ✖️','marksOff'],
+        ['Свод дз ✔️','nextDayHomeWorkOn'],
+        ['Свод дз ✖️','nextDayHomeWorkOff'],
+    )
+    arrFirstBtn.push(arrPrev[0][1][0],arrPrev[0][1][1])
+    arrThirdBtn.push(arrPrev[1][1][0],arrPrev[1][1][1])
+    arrAssets.push({
+        marks: arrPrev[0][0],
+        homeWork: false,
+        nextDayHomeWork: arrPrev[1][0],
+    })
+    buttonUpdate(ctx,arrFirstBtn,arrSecondBtn,arrThirdBtn,user,arrAssets)
 });
 
-function buttonUpdate(ctx, firstButton, secondButton, user, assets) {
-    ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
+botTg.action('nextDayHomeWorkOff', ctx=>{
+    let arrFirstBtn = []
+    let arrSecondBtn = []
+    let arrThirdBtn = ['Свод дз ✔️','nextDayHomeWorkOn']
+    let arrAssets = []
+    let user = users_ns.user[ctx.chat.id]
+    let arrPrev = assetsUpdate(
+        user.assets.marks,
+        user.assets.homeWork,
+        ['Появление оценок ✔️','marksOn'],
+        ['Появление оценок ✖️','marksOff'],
+        ['Появление дз ✔️️','homeWorkOn'],
+        ['Появление дз ✖️️️','homeWorkOff'],
+    )
+    arrFirstBtn.push(arrPrev[0][1][0],arrPrev[0][1][1])
+    arrSecondBtn.push(arrPrev[1][1][0],arrPrev[1][1][1])
+    arrAssets.push({
+        marks: arrPrev[0][0],
+        homeWork: arrPrev[1][0],
+        nextDayHomeWork: true,
+    })
+    buttonUpdate(ctx,arrFirstBtn,arrSecondBtn,arrThirdBtn,user,arrAssets)
+});
+botTg.action('nextDayHomeWorkOn', ctx=>{
+    let arrFirstBtn = []
+    let arrSecondBtn = []
+    let arrThirdBtn = ['Свод дз ✖️️','nextDayHomeWorkOff']
+    let arrAssets = []
+    let user = users_ns.user[ctx.chat.id]
+    let arrPrev = assetsUpdate(
+        user.assets.marks,
+        user.assets.homeWork,
+        ['Появление оценок ✔️','marksOn'],
+        ['Появление оценок ✖️','marksOff'],
+        ['Появление дз ✔️️','homeWorkOn'],
+        ['Появление дз ✖️️️','homeWorkOff'],
+    )
+    arrFirstBtn.push(arrPrev[0][1][0],arrPrev[0][1][1])
+    arrSecondBtn.push(arrPrev[1][1][0],arrPrev[1][1][1])
+    arrAssets.push({
+        marks: arrPrev[0][0],
+        homeWork: arrPrev[1][0],
+        nextDayHomeWork: false,
+    })
+    buttonUpdate(ctx,arrFirstBtn,arrSecondBtn,arrThirdBtn,user,arrAssets)
+});
+
+botTg.action('timeBtn', ctx=>{
+    ctx.reply('Выберите время',Extra.markup(
         Markup.inlineKeyboard([
-            [Markup.callbackButton(firstButton[0],firstButton[1]),Markup.callbackButton(secondButton[0],secondButton[1])]
+            [
+                Markup.callbackButton('10:00','timeBtnUpd1000'),
+                Markup.callbackButton('10:30','timeBtnUpd1030'),
+                Markup.callbackButton('11:00','timeBtnUpd1100'),
+                Markup.callbackButton('11:30','timeBtnUpd1130')
+            ],
+            [
+                Markup.callbackButton('12:00','timeBtnUpd1200'),
+                Markup.callbackButton('12:30','timeBtnUpd1230'),
+                Markup.callbackButton('13:00','timeBtnUpd1300'),
+                Markup.callbackButton('13:30','timeBtnUpd1330'),
+            ],
+            [
+                Markup.callbackButton('14:00','timeBtnUpd1400'),
+                Markup.callbackButton('14:30','timeBtnUpd1430'),
+                Markup.callbackButton('15:00','timeBtnUpd1500'),
+                Markup.callbackButton('15:30','timeBtnUpd1530')
+            ],
+            [
+                Markup.callbackButton('16:00','timeBtnUpd1600'),
+                Markup.callbackButton('16:30','timeBtnUpd1630'),
+                Markup.callbackButton('17:00','timeBtnUpd1700'),
+                Markup.callbackButton('17:30','timeBtnUpd1730')
+            ]
         ])
     ))
-    users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0],user.arrMarks,user.arrHomeWork)
+})
+botTg.action('timeBtnUpd1000',ctx=>{adventureTime('1000',ctx)})
+botTg.action('timeBtnUpd1030',ctx=>{adventureTime('1030',ctx)})
+botTg.action('timeBtnUpd1100',ctx=>{adventureTime('1100',ctx)})
+botTg.action('timeBtnUpd1130',ctx=>{adventureTime('1130',ctx)})
+botTg.action('timeBtnUpd1200',ctx=>{adventureTime('1200',ctx)})
+botTg.action('timeBtnUpd1230',ctx=>{adventureTime('1230',ctx)})
+botTg.action('timeBtnUpd1300',ctx=>{adventureTime('1300',ctx)})
+botTg.action('timeBtnUpd1330',ctx=>{adventureTime('1330',ctx)})
+botTg.action('timeBtnUpd1400',ctx=>{adventureTime('1400',ctx)})
+botTg.action('timeBtnUpd1430',ctx=>{adventureTime('1430',ctx)})
+botTg.action('timeBtnUpd1500',ctx=>{adventureTime('1500',ctx)})
+botTg.action('timeBtnUpd1530',ctx=>{adventureTime('1530',ctx)})
+botTg.action('timeBtnUpd1600',ctx=>{adventureTime('1600',ctx)})
+botTg.action('timeBtnUpd1630',ctx=>{adventureTime('1630',ctx)})
+botTg.action('timeBtnUpd1700',ctx=>{adventureTime('1700',ctx)})
+botTg.action('timeBtnUpd1730',ctx=>{adventureTime('1730',ctx)})
+function adventureTime(time,ctx){
+    let us = users_ns.user[ctx.chat.id]
+    users_ns.user[ctx.chat.id] = setUser(us.id, us.login, us.password, us.school, us.name, us.assets,time.slice(0,2),time.slice(2), us.arrMarks, us.arrHomeWork)
+    let date = new Date()
+    date.setHours(time.slice(0,2), time.slice(2))
+    ctx.editMessageText(`Выберите время\nСейчас стоит ${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}`, Extra.markup(
+        Markup.inlineKeyboard([
+            [
+                Markup.callbackButton('10:00','timeBtnUpd1000'),
+                Markup.callbackButton('10:30','timeBtnUpd1030'),
+                Markup.callbackButton('11:00','timeBtnUpd1100'),
+                Markup.callbackButton('11:30','timeBtnUpd1130')
+            ],
+            [
+                Markup.callbackButton('12:00','timeBtnUpd1200'),
+                Markup.callbackButton('12:30','timeBtnUpd1230'),
+                Markup.callbackButton('13:00','timeBtnUpd1300'),
+                Markup.callbackButton('13:30','timeBtnUpd1330'),
+            ],
+            [
+                Markup.callbackButton('14:00','timeBtnUpd1400'),
+                Markup.callbackButton('14:30','timeBtnUpd1430'),
+                Markup.callbackButton('15:00','timeBtnUpd1500'),
+                Markup.callbackButton('15:30','timeBtnUpd1530')
+            ],
+            [
+                Markup.callbackButton('16:00','timeBtnUpd1600'),
+                Markup.callbackButton('16:30','timeBtnUpd1630'),
+                Markup.callbackButton('17:00','timeBtnUpd1700'),
+                Markup.callbackButton('17:30','timeBtnUpd1730')
+            ]
+        ])
+    ))
+}
+
+function buttonUpdate(ctx, firstButton, secondButton, thirdButton, user, assets) {
+    let date = new Date()
+    date.setHours(user.time.hours, user.time.minutes)
+    let fourthButton = [`${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}`,'timeBtn']
+    ctx.editMessageText(`${ctx.update.callback_query.message.text}`, Extra.markup(
+        Markup.inlineKeyboard([
+            [Markup.callbackButton(firstButton[0],firstButton[1]),Markup.callbackButton(secondButton[0],secondButton[1])],
+            [Markup.callbackButton(thirdButton[0],thirdButton[1]),Markup.callbackButton(fourthButton[0],fourthButton[1])]
+        ])
+    ))
+    users_ns.user[ctx.chat.id] = setUser(user.id,user.login,user.password,user.school,user.name,assets[0],user.time.hours,user.time.minutes,user.arrMarks,user.arrHomeWork)
 }

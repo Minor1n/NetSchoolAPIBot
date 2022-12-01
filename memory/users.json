@@ -8,7 +8,12 @@
 			"school": null,
 			"assets": {
 				"marks": false,
-				"homeWork": false
+				"homeWork": false,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				null
@@ -23,6 +28,15 @@
 			"login": null,
 			"password": null,
 			"school": null,
+			"assets": {
+				"marks": false,
+				"homeWork": false,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
+			},
 			"arrMarks": [
 				null
 			],
@@ -38,7 +52,12 @@
 			"school": null,
 			"assets": {
 				"marks": false,
-				"homeWork": false
+				"homeWork": false,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				null
@@ -55,7 +74,12 @@
 			"school": null,
 			"assets": {
 				"marks": false,
-				"homeWork": false
+				"homeWork": false,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				null
@@ -72,7 +96,12 @@
 			"school": "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
 			"assets": {
 				"marks": true,
-				"homeWork": true
+				"homeWork": true,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				{
@@ -234,7 +263,12 @@
 			"school": "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
 			"assets": {
 				"marks": true,
-				"homeWork": true
+				"homeWork": true,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				{
@@ -411,7 +445,12 @@
 			"school": null,
 			"assets": {
 				"marks": false,
-				"homeWork": false
+				"homeWork": false,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				null
@@ -427,7 +466,12 @@
 			"school": "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
 			"assets": {
 				"marks": true,
-				"homeWork": true
+				"homeWork": true,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				{
@@ -646,7 +690,12 @@
 			"school": "МАОУ \"Алексеевская гимназия г.Благовещенска\"",
 			"assets": {
 				"marks": true,
-				"homeWork": true
+				"homeWork": true,
+				"nextDayHomeWork": true
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 30
 			},
 			"arrMarks": [
 				{
@@ -800,22 +849,6 @@
 				}
 			]
 		},
-		"1732858807": {
-			"id": 1732858807,
-			"login": null,
-			"password": null,
-			"school": null,
-			"assets": {
-				"marks": true,
-				"homeWork": true
-			},
-			"arrMarks": [
-				null
-			],
-			"arrHomeWork": [
-				null
-			]
-		},
 		"1983003167": {
 			"id": 1983003167,
 			"name": "The_Wolf_of_Death",
@@ -824,7 +857,12 @@
 			"school": null,
 			"assets": {
 				"marks": false,
-				"homeWork": false
+				"homeWork": false,
+				"nextDayHomeWork": false
+			},
+			"time": {
+				"hours": 13,
+				"minutes": 0
 			},
 			"arrMarks": [
 				null
