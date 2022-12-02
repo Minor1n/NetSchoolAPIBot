@@ -145,7 +145,7 @@ cron.schedule('0,10,20,30,40,50 0-23 * * *', async function(){
                     }
                 }
                 if (us.assets.nextDayHomeWork === true){
-                    if(us.time.hours === new Date().getHours && us.time.minutes === new Date().getMinutes){
+                    if(new Date().getHours() === us.time.hours && new Date().getMinutes()=== us.time.minutes){
                         let arr0 = null;
                         let arr = [];
                         let result = [];
