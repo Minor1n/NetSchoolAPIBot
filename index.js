@@ -145,7 +145,8 @@ cron.schedule('0,10,20,30,40,50 0-23 * * *', async function(){
                     }
                 }
                 if (us.assets.nextDayHomeWork === true){
-                    if(new Date().getHours() === us.time.hours && new Date().getMinutes()=== us.time.minutes){
+                    let date = new Date()
+                    if(Number (date.getHours()) === Number(users_ns.user[i].time.hours) && Number(date.getMinutes()) === Number(users_ns.user[i].time.minutes)){
                         let arr0 = null;
                         let arr = [];
                         let result = [];
@@ -154,7 +155,6 @@ cron.schedule('0,10,20,30,40,50 0-23 * * *', async function(){
                             start: date,
                             end: date,
                         });
-                        console.log(diary.days[0].lessons)
                         await packageAlert(diary, arr0, arr, 'nextDay')
                         if(arr[0]){
                             for(let i in arr){result.push(`\n<b>${arr[i].lesson}</b>: <code>${arr[i].homeWork}</code>`)}
@@ -171,7 +171,7 @@ cron.schedule('0,10,20,30,40,50 0-23 * * *', async function(){
             }
         }
     }
-})
+});
 
 function registration(ctx){
     if(!users_ns.user[ctx.from.id]){
