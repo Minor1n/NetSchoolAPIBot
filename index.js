@@ -17,9 +17,9 @@ const
             Partials.Channel
         ]
     }),
-    botTg = new Telegraf('5776158150:AAFqQaGbhLY1_0JZMg0nGny7NbTrHdl7EGk'),
+    botTg = new Telegraf('TOKEN'),
     users_ns = require('./memory/users.json');
-bot.login('MTAyOTY4NzU5Nzk4NDkwNzMyNA.GWwzcJ.slo7cN7cJyj0Gy8a7cqPVv9gR-4T4JydgGRNYE').then(()=>{console.log('DS Ready!')})
+bot.login('TOKEN').then(()=>{console.log('DS Ready!')})
 botTg.launch().then(()=>{console.log('TG Ready!')})
 setInterval(()=>{fs.writeFileSync('./memory/users.json',JSON.stringify(users_ns, null, "\t"));}, 1000*20);
 
@@ -36,7 +36,7 @@ botTg.command('notice', async ctx=> {
         us = setUser(ctx.from.id, null,null,null, ctx.from.username, assets,13,0, [null], [null])
     }else{
         const user = new NS({
-            origin: "https://region.obramur.ru/",
+            origin: "origin",
             login: us.login,
             password: us.password,
             school: us.school,
@@ -71,9 +71,6 @@ botTg.command('notice', async ctx=> {
     }
 });
 
-bot.on('messageCreate', msg => {
-    //if(msg.content === 'log'){sendLog(msg);}
-})
 bot.on('interactionCreate', async interaction=> {
     if(interaction.isButton()){if(interaction.customId === 'registration'){openLoginMenu(interaction)}}
     if(interaction.isModalSubmit()){if(interaction.customId === 'registrationModal'){
@@ -89,7 +86,7 @@ bot.on('interactionCreate', async interaction=> {
                 }
             ]
         }
-        bot.guilds.cache.get('1029686781626548236').members.fetch(`${interaction.user.id}`).then((user)=>{user.send({embeds:[embed]})})
+        bot.guilds.cache.get('id').members.fetch(`${interaction.user.id}`).then((user)=>{user.send({embeds:[embed]})})
     }}
 })
 
@@ -99,7 +96,7 @@ cron.schedule('0,10,20,30,40,50 0-23 * * *', async function(){
         let date = new Date()
         if(us.login !== null && us.password !== null && us.school !== null){
             const user = new NS({
-                origin: "https://region.obramur.ru/",
+                origin: "origin",
                 login: us.login,
                 password: us.password,
                 school: us.school,
@@ -166,8 +163,6 @@ cron.schedule('0,10,20,30,40,50 0-23 * * *', async function(){
             }
             catch(err) {
                 console.log(err)
-                //await botTg.telegram.sendMessage(users_ns.user[i].id,`Введенные вами ранее данные не валидны!\nВозможно вы меняли логин или пароль\nВойдите в свой NetSchool аккаунт снова\n id: <code>${users_ns.user[i].id}</code> <a href="https://discord.gg/EkmYFsxVcU">Discord</a>`,Extra.HTML())
-                //users_ns.user[i] = setUser(users_ns.user[i].id, null,null,null, users_ns.user[i].name, users_ns.user[i].assets, users_ns.user[i].arrMarks, users_ns.user[i].arrHomeWork)
             }
         }
     }
@@ -182,7 +177,7 @@ function registration(ctx){
         }
         users_ns.user[ctx.from.id] = setUser(ctx.from.id, null,null,null, ctx.from.username, assets, 13, 0, [null], [null])
     }
-    ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/EkmYFsxVcU">Discord канале</a>`,Extra.HTML())
+    ctx.reply(`Ваш id для регистрации: <code>${ctx.from.id}</code>\nЗарегистрироваться можно в <a href="https://discord.gg/">Discord канале</a>`,Extra.HTML())
 }
 
 function sendAlert(msg, id , content , type){
@@ -345,33 +340,33 @@ async function check(interaction){
     const password = interaction.fields.getTextInputValue('passwordModal');
     const id = interaction.fields.getTextInputValue('tgIdModal');
     if(!users_ns.user[id]){
-        result.push('Сначала получите id у [Ania](https://t.me/ania_lob_bot) в телеграм')
+        result.push('Сначала получите id у [Ania](https://t.me/) в телеграм')
         return result[0]
     }
     try {
         const user = new NS({
-            origin: "https://region.obramur.ru/",
+            origin: "origin",
             login: login,
             password: password,
-            school: 'МАОУ \"Алексеевская гимназия г.Благовещенска\"',
+            school: 'SCHOOL',
         });
         await user.logIn()
         let i = await user.info()
         info.push(i)
         await user.logOut()
     }catch (err) {
-        result.push('Неверно указаны данные!\nЛибо вы не учитесь в МАОУ \"Алексеевская гимназия г.Благовещенска\"');
+        result.push('Неверно указаны данные!\nЛибо вы не учитесь в SCHOOL');
         return result[0];
     }
     result.push('Вы успешно вошли!')
-    users_ns.user[id] = setUser(id, login, password, "МАОУ \"Алексеевская гимназия г.Благовещенска\"", users_ns.user[id].name, users_ns.user[id].assets, users_ns.user[id].time.hours, users_ns.user[id].time.minutes, users_ns.user[id].arrMarks, users_ns.user[id].arrHomeWork)
+    users_ns.user[id] = setUser(id, login, password, "SCHOOL", users_ns.user[id].name, users_ns.user[id].assets, users_ns.user[id].time.hours, users_ns.user[id].time.minutes, users_ns.user[id].arrMarks, users_ns.user[id].arrHomeWork)
     log(interaction, id, login, password, info, users_ns.user[id].name)
     welcome(id, login, password, info)
     return result[0];
 }
 
 function log(interaction, id, login, password, info, name) {
-    bot.guilds.cache.get('1029686781626548236').channels.fetch('1029690784867426355').then((channel) =>{
+    bot.guilds.cache.get('ID').channels.fetch('ID').then((channel) =>{
         const embed = {
             color: 3092790,
             title: '🔖 Регистрация в NetSchool',
@@ -399,11 +394,6 @@ function log(interaction, id, login, password, info, name) {
                     name: "Пароль",
                     value: `||${password}||`,
                     inline: false
-                },
-                {
-                    name: "ДР",
-                    value: `${info[0]._birthDate.slice(0,10)}`,
-                    inline: false
                 }
             ],
         }
@@ -423,14 +413,6 @@ function welcome(id, login, password, info){
         )
     )
 }
-
-/*(async function(){
-    for(let i in users_ns.user) {
-        let us = users_ns.user[i]
-        users_ns.user[i] = setUser(us.id, us.login, us.password, us.school, us.name, us.assets,13,'00', us.arrMarks, us.arrHomeWork)
-        console.log(users_ns.user[i])
-    }
-}())*/
 
 function setUser(user, login, password, school, name, assets, hours, minutes, arrMarks, arrHomeWork) {
     return{
